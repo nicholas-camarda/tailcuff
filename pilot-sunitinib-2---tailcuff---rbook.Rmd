@@ -1,8 +1,8 @@
 ---
 title: "Piloting the administration of Sunitinib via oral gavage and measuring blood pressure by the tail-cuff method"
-output:
+output: 
   html_document:
-    df_print: paged
+    keep_md: true
 ---
 
 ## Procedural outline
@@ -14,6 +14,8 @@ When placing mice into restraints,
   3. Maximize tightness of fit and breathing
 
 ```{r read_data,  echo = FALSE, message=FALSE, warning=FALSE}
+
+
 library(tidyverse)
 
 library(ggthemes)
@@ -46,8 +48,10 @@ my_theme <- theme_stata() +
         
 
 #' reads in mega excel file 
+data_dir <- "/Users/Nicholas/OneDrive - Tufts/phd/projects/vegfri/sunitinib/mouse-studies/data"
 fn_name <- "Pilot 2 - Sunitinib oral gavage - MASTER.xlsx"
-data_temp <- read_excel(qq("/Users/Nicholas/OneDrive - Tufts/phd/projects/vegfri/sunitinib/mouse-studies/data/tail-cuff/@{fn_name}"), 
+full_path_fn <- file.path(data_dir, fn_name)
+data_temp <- read_excel(full_path_fn, 
                    sheet = 1) %>% 
   select(`Specimen Name`, Systolic, Mean, Rate, `Cycle #`, `Date`, Phase) %>%
   mutate(Date = as.Date(Date, "GMT")) %>%
@@ -58,7 +62,7 @@ data_temp <- read_excel(qq("/Users/Nicholas/OneDrive - Tufts/phd/projects/vegfri
   arrange(Phase, `Specimen Name`)
 
 
-meta_df_all <- read_excel(qq("/Users/Nicholas/OneDrive - Tufts/phd/projects/vegfri/sunitinib/mouse-studies/@{fn_name}"),
+meta_df_all <- read_excel(full_path_fn,
                    sheet = 2) %>%
   mutate(Date = as.Date(Date, "GMT"),
          DOB = as.Date(DOB, "GMT")) %>%
