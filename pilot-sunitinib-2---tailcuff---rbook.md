@@ -1,9 +1,24 @@
 ---
 title: "Piloting the administration of Sunitinib via oral gavage and measuring blood pressure by the tail-cuff method"
+author: Nick Camarda
+date: "20 March, 2021"
 output: 
   html_document:
     keep_md: true
 ---
+
+
+<style type="text/css">
+# scrollable code blocks to limit
+# the height to 100px
+.scroll-100 {
+  max-height: 100px;
+  overflow-y: auto;
+  background-color: inherit;
+}
+
+# usage: at top of code block, e.g. {r, class.output="scroll-100"}
+</style>
 
 ## Procedural outline
 Turn on machines / heaters. Put mice in tailcuff room and let the room and mice acclimate to appropriate temperature for ~30-60 mins. Then, check cuffs for leaks. Put mice into restraints and perform 5 acclimation cycles + 20 recorded cycles. 
@@ -327,14 +342,14 @@ This workbook is set up to analyze two groups of mice! Just run and enjoy (you'l
 
 
 ## Inspect accepted cycles and changes in mouse body weight over time
-![](pilot-sunitinib-2---tailcuff---rbook_files/figure-html/accepted_cycles-1.png)<!-- -->
+![](README_figs/README-accepted_cycles-1.png)<!-- -->
 ### Average animal body weight
-![](pilot-sunitinib-2---tailcuff---rbook_files/figure-html/avg_bodyweight-1.png)<!-- -->
+![](README_figs/README-avg_bodyweight-1.png)<!-- -->
 
 ### Animal body weight change over time
-![](pilot-sunitinib-2---tailcuff---rbook_files/figure-html/weight_change-1.png)<!-- -->
+![](README_figs/README-weight_change-1.png)<!-- -->
 
-![](pilot-sunitinib-2---tailcuff---rbook_files/figure-html/change_weight_avg-1.png)<!-- -->
+![](README_figs/README-change_weight_avg-1.png)<!-- -->
 
 ## Blood Pressure Data Analysis
 ### Filtering out days that had less than 'x' cycles
@@ -404,30 +419,30 @@ Since blood pressure is always measured before oral gavage, baseline goes from 0
 
 
 ### Assess BP of randomized groups before beginning treatment
-![](pilot-sunitinib-2---tailcuff---rbook_files/figure-html/before_rand_summary-1.png)<!-- -->
+![](README_figs/README-before_rand_summary-1.png)<!-- -->
 
 
-![](pilot-sunitinib-2---tailcuff---rbook_files/figure-html/plot_groupwise-1.png)<!-- -->
+![](README_figs/README-plot_groupwise-1.png)<!-- -->
 
 
 
 
 ### Plotting average difference between groups across phases
 Differences are calculated as change per specimen over each phase
-![](pilot-sunitinib-2---tailcuff---rbook_files/figure-html/plot_avg_diff-1.png)<!-- -->
+![](README_figs/README-plot_avg_diff-1.png)<!-- -->
 
 ### Compared to average baseline
-![](pilot-sunitinib-2---tailcuff---rbook_files/figure-html/avg_baseine_comp-1.png)<!-- -->
+![](README_figs/README-avg_baseine_comp-1.png)<!-- -->
 
 
 
 ### Time-series data
 For completeness, here is the time series data of each mouse across each Phase of the experiment:
-![](pilot-sunitinib-2---tailcuff---rbook_files/figure-html/time-1.png)<!-- -->
+![](README_figs/README-time-1.png)<!-- -->
 
-![](pilot-sunitinib-2---tailcuff---rbook_files/figure-html/avg_time_series-1.png)<!-- -->
+![](README_figs/README-avg_time_series-1.png)<!-- -->
 
-![](pilot-sunitinib-2---tailcuff---rbook_files/figure-html/time_series_diff-1.png)<!-- -->
+![](README_figs/README-time_series_diff-1.png)<!-- -->
 
 
 ### Treatment with Sunitinib start on 03/15/21 BP (recording of effect starts on 03/16/21)
@@ -435,5 +450,5 @@ Since BP is recorded before gavage to reduce stress
 
 These are the average blood pressures of each mice across each Phase of the experiment
 
-![](pilot-sunitinib-2---tailcuff---rbook_files/figure-html/treatment-1.png)<!-- -->
+![](README_figs/README-treatment-1.png)<!-- -->
 
