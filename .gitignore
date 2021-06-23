@@ -1,6 +1,7 @@
 # user files
 helper-files/*
 rmd/*
+data/
 
 # History files
 .Rhistory
