@@ -1,0 +1,23 @@
+---
+title: "YOUR TITLE"
+author: "YOUR NAME"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    df_print: paged
+---
+
+## Procedural outline
+Turn on machines / heaters. Put mice in tailcuff room and let the room and mice acclimate to appropriate temperature for ~30-60 mins. Then, check cuffs for leaks. Put mice into restraints, and perform 5 acclimation cycles + 20 recorded cycles. Save your data to a thumb drive.
+
+When placing mice into restraints,  
+1. Quickly place nose cuff on to avoid letting them turn around/upside in the restraint
+2. Make sure that you can see them breathing...  
+3. Maximize tightness of fit *and* breathing 
+
+
+```{r load}
+
+
+```
+
