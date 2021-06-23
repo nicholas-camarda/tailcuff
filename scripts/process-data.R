@@ -8,7 +8,7 @@ library(tidyverse)
 
 #' @param data_dir the parent directory of your data, e.g. my_data/
 #' @note underneath *data_dir* should simply be .xlsx files
-#' @output writes a processed data file to data/ directory
+#' @output writes a processed data file to data/ directory called data-{date}.csv
 process_data_fn <- function(data_dir){
   raw_data_dir_full <- file.path(data_dir, project_dir)
   raw_data_tbl <- tibble(fn = list.files(raw_data_dir_full, full.names = TRUE)) %>%
@@ -22,7 +22,9 @@ process_data_fn <- function(data_dir){
     mutate(Phase = "training") %>%
     arrange(Date)
   
-  write_csv(raw_data_tbl, "~/Downloads/temp.csv")
+  datetime <- format(Sys.time(), "%a %b %d %X %Y")
+  dir.create("output/cleaned-data", recursive = T, showWarnings = F)
+  write_csv(raw_data_tbl, "output/cleaned-data/my_data-@{datetime}.csv")
 }
 
 # move your dat
