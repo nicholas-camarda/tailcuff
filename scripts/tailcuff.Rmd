@@ -16,6 +16,14 @@ When placing mice into restraints,
 3. Maximize tightness of fit *and* breathing 
 
 
+## Run *process-data.R* first!
+Be sure to fill in the proper Phases for each date in the excel spreadsheet and save it as an excel file with the proper extension *my_data.xlsx* in the folder *output/cleaned-data*
+
+
+## Fill in the proper paths in *exec.R*
+
+## Then hit Shift+Cmd+K :)
+
 ```{r load}
 
 

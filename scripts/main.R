@@ -38,43 +38,47 @@ my_theme <- theme_stata() +
         axis.text = element_text(size = 12),
         axis.title = element_text(size = 14, face = "bold")) 
 
-
-
+my_cur_dir <- as.character(getwd())
+data_dir <- file.path(my_cur_dir, "data")
+dir.create(data_dir)
+output_dir <- file.path(my_cur_dir, "output")
+dir.create(output_dir)
+cleaned_data_dir <- file.path(output_dir, "cleaned-data")
+dir.create(cleaned_data_dir)
 
 #' reads in mega excel file 
-data_dir <- "/Users/ncamarda/OneDrive - Tufts/phd/projects/vegfri/sorafenib/mouse-studies/tail-cuff"
-fn_name <- "Pilot 2 - sorafenib oral gavage - dosage 100 mgkgd - MASTER.xlsx"
-full_path_fn <- file.path(data_dir, fn_name)
-
-split_fn_name <- str_split(string = fn_name, pattern = " - ", simplify = TRUE)
-trial_name <- split_fn_name[,1]
-drug_name <- str_split(string = split_fn_name[,2], pattern = " ", simplify = TRUE)[,1]
-drug_dosage <- str_split(string = split_fn_name[,3], pattern = " ", simplify = TRUE)[,2]
-
-
-# Extract the trial num from fn_name, number next to "pilot"
-trial_num <- str_split(string = fn_name, pattern = " ", simplify = T)[,2]
-
-#' other removed fn denotes other reasons why you might not want to include a mouse's data for a specific day
-other_removed_fn <- qq("./other_removed-@{drug_name}-@{trial_num}.csv")
-if (!file.exists(other_removed_fn)) {
-  file.create(other_removed_fn, showWarnings = FALSE)
+full_path_fn <- file.path(cleaned_data_dir, fn_name)
+if(!file.exists(full_path_fn)) {
+  stop(qq("@{full_path_fn} does not exist."))
 }
 
-shape_id_df <- tibble(`Specimen Name` = str_c("M",seq(1, 10, 1)), 
-                      shape_id = c(0:6,10:12)) # c(0:6,10) 
+
+#' other removed fn denotes other reasons why you might not want to include a mouse's data for a specific day
+removed_dir <- file.path(output_dir, "removed")
+other_removed_fn <- file.path(removed_dir, qq("other-removed_@{drug_name}_@{drug_dosage}_trial-@{trial_num}.csv"))
+if (!file.exists(other_removed_fn)) {
+  dir.create(removed_dir, recursive = T, showWarnings = F)
+  message("Created output/removed directory. You can edit this in excel.")
+  write_lines(x = c("Specimen Name",	"Date",	"group", "n",	"reason"), file = other_removed_fn, sep = ",")
+}
+
+attr_df <- tibble(`Specimen Name` = str_c("M",seq(1, 12, 1)), 
+                      shape_id = c(0:6,10:14)) 
+
 
 ## Read in the data
-data_temp <- read_excel(full_path_fn, sheet = 1) %>% 
+data_temp_b <- read_excel(full_path_fn, sheet = 1) %>% 
   dplyr::select(`Specimen Name`, Systolic, Mean, Rate, `Cycle #`, `Date`, Phase) %>%
   mutate(Date = as.Date(Date, "GMT")) %>%
-  arrange(Date, `Specimen Name`, `Cycle #`) %>%
-  mutate(`Specimen Name` = factor(`Specimen Name`, levels = str_c("M", seq(1, 10, 1)))) %>%
-  # filter(Phase != "training", Phase != "tx1") %>%
+  arrange(Date, `Specimen Name`, `Cycle #`)
+
+num_mice <- nrow(data_temp_b %>% distinct(`Specimen Name`))
+data_temp <- data_temp_b %>%
+  mutate(`Specimen Name` = factor(`Specimen Name`, levels = str_c("M", seq(1, num_mice, 1)))) %>%
   mutate(Phase = factor(Phase, levels = fct_phases)) %>%
   arrange(Phase, `Specimen Name`) 
 
-meta_df_all_temp <- read_excel(full_path_fn,
+meta_df_all <- read_excel(full_path_fn,
                                sheet = 2) %>%
   mutate(Date = as.Date(Date, "GMT"),
          DOB = as.Date(DOB, "GMT")) %>%
@@ -84,16 +88,14 @@ meta_df_all_temp <- read_excel(full_path_fn,
          `Body weight (g)` = as.numeric(`Body weight (g)`)) %>%
   group_by(`Specimen Name`)
 
-
-dead_mice <- meta_df_all_temp %>% 
+# Check dead mice
+dead_mice <- meta_df_all %>% 
   distinct(`Specimen Name`, `Date of death`) %>%
   na.omit() 
 
-meta_df_temp <- meta_df_all_temp %>% 
+meta_df_temp <- meta_df_all %>% 
   summarize(`Average body weight (g)` = mean(`Body weight (g)`, na.rm = T), .groups = "keep") 
 
-
-meta_df_all <- meta_df_all_temp
 meta_df <- inner_join(meta_df_all %>% 
                         dplyr::select(-`Body weight (g)`, -`Date`) %>% 
                         distinct(), 
@@ -101,17 +103,61 @@ meta_df <- inner_join(meta_df_all %>%
   arrange(`Specimen Name`) %>%
   anti_join(dead_mice %>% distinct(`Specimen Name`))
 
-# block random assignment by machine
-
-# set.seed(3334) # pilot 1
-set.seed(2223) # pilot 2
-
-num_mice <- nrow(meta_df);
 # https://cran.r-project.org/web/packages/randomizr/vignettes/randomizr_vignette.html
 
+for_randomization_df <- data_temp %>% 
+  group_by(`Specimen Name`, Phase) %>%
+  summarize(mean_systolic = mean(`Systolic`), .groups = "keep") %>%
+  filter(Phase == "baseline") %>%
+  .$mean_systolic
+
+#' @note get random assignments such that blood pressure is roughly equal
+#' @param vec the vector of average BPs for the *baseline phase*
+#' @param m_each_ the number of subjects in each group
+#' @param tol_diff max BP difference (in mmHg) that you are willing to tolerate between groups, autoset to 3
+#' @return a list containing: 
+#' *rand_assignemnts* = the randomization assignments in order 
+#' *veh_mean* and *tx_mean* = the average BP values of each group, 
+#' *random_seed* = the random seed, 
+#' *machine_prop* = the proportion of veh/sun samples assigned to each machine (1 means equal proportions of veh/tx assigned to each machine)
+#' *num_veh* and *num_tx* = the number of samples in each group
+get_random_assign <- function(vec, m_each_ = c(4,6), tol_diff = 3) {
+  rand <- sample(9999,1)
+  set.seed(rand)
+  # const initialize
+  veh_mean <- 14359
+  tx_mean <- 2234
+  
+  # machine placement
+  prop <- 2
+  while (abs(veh_mean - tx_mean) > tol_diff || abs(prop - 1) > 0.1 ){
+    rand_assign <- complete_ra(N = length(vec),
+                               conditions = c("vehicle", drug_name), 
+                               m_each = m_each_)
+    table(rand_assign) 
+    veh_mean <- mean(vec[rand_assign == "vehicle"])
+    tx_mean <- mean(vec[rand_assign == drug_name])
+    
+    m1 <- seq(1,length(vec)/2, by=1)
+    m2 <- seq(m1[length(m1)]+1,length(vec), by=1)
+    
+    prop <- sum(as.integer(rand_assign[m1])) / sum(as.integer(rand_assign[m2]))
+  }
+  
+  num_veh <- sum(rand_assign == "vehicle")
+  num_tx <- sum(rand_assign == drug_name)
+
+  return(list("rand_assignments" = rand_assign, "veh_mean" = veh_mean, 
+              "tx_mean" = tx_mean, "random_seed" = rand, "machine_prop" = prop,
+              "num_veh" = num_veh, "num_tx" = num_tx))
+}
+
+rand_lst <- get_random_assign(vec = for_randomization_df, m_each_ = c(4,6))
+
+rand_samp_assign <- bind_cols(meta_df %>% distinct(`Specimen Name`), 
+                              group = rand_lst$rand_assignments)
 
 meta_df_w_assign <- meta_df %>% 
-  bind_cols(tibble(group = complete_ra(N = num_mice, prob = 0.6))) %>%
   mutate(group = ifelse(group == 0, "vehicle", drug_name)) %>%
   mutate(group = factor(group, levels = c(drug_name, "vehicle"))) %>%
   arrange(`Specimen Name`, group) %>%

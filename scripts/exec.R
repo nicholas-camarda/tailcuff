@@ -1,7 +1,10 @@
 
+fn_name <- "my_data.xlsx"
 
-data_dir <- "/Volumes/NDC2021/tailcuff"
-project_dir <- "sor-pilot2"
+trial_num <- "3"
+drug_name <- "sorafenib"
+drug_dosage <- "300"
+freq <- "mg/kg/d"
 
 
 
