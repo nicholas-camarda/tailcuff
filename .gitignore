@@ -3,7 +3,7 @@ helper-files/*
 rmd/*
 data/*
 output/*
-
+old/*
 
 # History files
 .Rhistory

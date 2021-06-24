@@ -1,8 +1,10 @@
 # check for packages that need to be installed
+message("Checking for required packages...")
 list_of_packages <- c("tidyverse", "rstatix", "ggthemes", "ggforce", "ggsci", "ggpubr", 
                       "readxl", "forcats", "knitr", "kableExtra", "gridExtra", "GetoptLong", "zoo", "randomizr")
 new_packages <- list_of_packages[!(list_of_packages %in% installed.packages()[,"Package"])]
 if(length(new_packages)) install.packages(new_packages)
+message("Done!")
 
 
 # load
@@ -23,6 +25,7 @@ library(zoo)
 library(randomizr)
 
 
+
 # set knitr chunk options
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, 
                       warning = FALSE, results = "asis", fig.width = 10, fig.height = 8)
@@ -40,17 +43,19 @@ my_theme <- theme_stata() +
 
 my_cur_dir <- as.character(getwd())
 data_dir <- file.path(my_cur_dir, "data")
-dir.create(data_dir)
+dir.create(data_dir, showWarnings = FALSE)
 output_dir <- file.path(my_cur_dir, "output")
-dir.create(output_dir)
+dir.create(output_dir, showWarnings = FALSE)
 cleaned_data_dir <- file.path(output_dir, "cleaned-data")
-dir.create(cleaned_data_dir)
+dir.create(cleaned_data_dir, showWarnings = FALSE)
 
 #' reads in mega excel file 
 full_path_fn <- file.path(cleaned_data_dir, fn_name)
 if(!file.exists(full_path_fn)) {
   stop(qq("@{full_path_fn} does not exist."))
 }
+
+
 
 
 #' other removed fn denotes other reasons why you might not want to include a mouse's data for a specific day
@@ -65,12 +70,15 @@ if (!file.exists(other_removed_fn)) {
 attr_df <- tibble(`Specimen Name` = str_c("M",seq(1, 12, 1)), 
                       shape_id = c(0:6,10:14)) 
 
-
 ## Read in the data
 data_temp_b <- read_excel(full_path_fn, sheet = 1) %>% 
   dplyr::select(`Specimen Name`, Systolic, Mean, Rate, `Cycle #`, `Date`, Phase) %>%
   mutate(Date = as.Date(Date, "GMT")) %>%
   arrange(Date, `Specimen Name`, `Cycle #`)
+
+if(any("FILL IN" %in% data_temp_b$Phase)){
+  stop("You must adjust the phases in the final excel file to one of:\ntraining, baseline, vehicle, treatment, treatment 2x")
+}
 
 num_mice <- nrow(data_temp_b %>% distinct(`Specimen Name`))
 data_temp <- data_temp_b %>%
@@ -99,9 +107,9 @@ meta_df_temp <- meta_df_all %>%
 meta_df <- inner_join(meta_df_all %>% 
                         dplyr::select(-`Body weight (g)`, -`Date`) %>% 
                         distinct(), 
-                      meta_df_temp) %>%
+                      meta_df_temp, by = "Specimen Name") %>%
   arrange(`Specimen Name`) %>%
-  anti_join(dead_mice %>% distinct(`Specimen Name`))
+  anti_join(dead_mice %>% distinct(`Specimen Name`), by = "Specimen Name")
 
 # https://cran.r-project.org/web/packages/randomizr/vignettes/randomizr_vignette.html
 
@@ -130,6 +138,7 @@ get_random_assign <- function(vec, m_each_ = c(4,6), tol_diff = 3) {
   
   # machine placement
   prop <- 2
+  
   while (abs(veh_mean - tx_mean) > tol_diff || abs(prop - 1) > 0.1 ){
     rand_assign <- complete_ra(N = length(vec),
                                conditions = c("vehicle", drug_name), 
@@ -152,13 +161,29 @@ get_random_assign <- function(vec, m_each_ = c(4,6), tol_diff = 3) {
               "num_veh" = num_veh, "num_tx" = num_tx))
 }
 
-rand_lst <- get_random_assign(vec = for_randomization_df, m_each_ = c(4,6))
 
-rand_samp_assign <- bind_cols(meta_df %>% distinct(`Specimen Name`), 
-                              group = rand_lst$rand_assignments)
+random_assignment_dir <- file.path(output_dir, "random_assignment")
+dir.create(random_assignment_dir, showWarnings = FALSE, recursive = TRUE)
+rand_assign_fn <- file.path(random_assignment_dir, "group_assignments.tsv")
+if (!file.exists(rand_assign_fn)) {
+  message("Performing randomization...")
+  rand_lst <- get_random_assign(vec = for_randomization_df, m_each_ = c(4,6))
+  
+  # write down random assignment and random seed
+  rand_samp_assign <- bind_cols(meta_df %>% distinct(`Specimen Name`), 
+                                group = rand_lst$rand_assignments) %>%
+    bind_cols(as_tibble(rand_lst))
+  
+  write_tsv(rand_samp_assign, file = rand_assign_fn)
+} else {
+  message("Found stored randomization information, loading cached data")
+  rand_samp_assign <- suppressMessages(read_tsv(rand_assign_fn))
+}
+message("Done!")
+
 
 meta_df_w_assign <- meta_df %>% 
-  mutate(group = ifelse(group == 0, "vehicle", drug_name)) %>%
+  left_join(rand_samp_assign %>% distinct(`Specimen Name`, group), by = "Specimen Name") %>%
   mutate(group = factor(group, levels = c(drug_name, "vehicle"))) %>%
   arrange(`Specimen Name`, group) %>%
   dplyr::select(group, everything())
@@ -176,11 +201,11 @@ num_mice_per_group_str <- num_mice_per_group %>%
 
 # merge data and meta
 data <- data_temp %>% 
-  right_join(meta_df_w_assign) %>% # inner join? right join?
-  right_join(shape_id_df) %>%
-  mutate(color = ifelse(group == "vehicle", "#1e81b0", "#ed9942")) %>%
-  mutate(color = factor(color, levels = c("#1e81b0", "#ed9942"))) %>%
-  mutate(group = factor(group, levels = c("vehicle", drug_name))) %>%
+  left_join(meta_df_w_assign, by = "Specimen Name") %>% # inner join? right join?
+  left_join(attr_df, by = "Specimen Name") %>%
+  mutate(color = ifelse(group == "vehicle", veh_color, tx_color)) %>%
+  mutate(color = factor(color, levels = c(veh_color, tx_color))) %>%
+  mutate(group = factor(group, levels = c("vehicle", drug_name))) %>% # ensure factor in correct order
   mutate(`Specimen Name` = factor(`Specimen Name`, levels = unique(.$`Specimen Name`))) 
 
 
@@ -189,3 +214,7 @@ names(named_color_vec) <- levels(data$group)
 
 shape_ids <- unique(data$shape_id)
 names(shape_ids) <- levels(data$`Specimen Name`)
+
+message("Done loading data!")
+
+
