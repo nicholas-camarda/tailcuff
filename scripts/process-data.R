@@ -33,11 +33,35 @@ process_data_fn <- function(project_dir){
     mutate(Phase = "FILL IN") %>%
     arrange(Date, `Specimen Name`))
   
+  
+  
   clean_output_dir <- file.path("output", project_dir, "cleaned-data")
   dir.create(clean_output_dir, recursive = T, showWarnings = F)
   write_csv(raw_data_tbl, file.path(clean_output_dir, "my_data.csv"))
+  
+  
+  # example data and metadata - make once
+  example_data_fn <- file.path(cleaned_data_dir, "example-data.pdf")
+  example_metadata_fn <- file.path(cleaned_data_dir, "example-metadata.pdf")
+  if (!file.exists(example_data_fn) | !file.exists(example_metadata_fn)) {
+    message(qq("Writing example data and metadata files, for reference, into @{cleaned_data_dir}"))
+    
+    # make up an example that doesn't rely on previousyl stored data
+    kable(head(data_temp_b, n = 15), caption = "Metadata", align = "c") %>%
+      column_spec(column = c(ncol(data_temp_b)), background = "greenyellow") %>%
+      kable_styling("striped") %>%
+      save_kable(example_data_fn)
+    
+    kable(head(meta_df_all %>% arrange(`Date`, `Specimen Name`)), caption = "Metadata", align = "c") %>%
+      kable_styling("striped") %>%
+      save_kable(example_metadata_fn)
+    message("Done!")
+  }
+  
   message(qq("Done! Check output/@{project_dir}/cleaned-data"))
-  message("BEFORE running the next step, adjust the Phases of the experiment in Excel!!")
+  message(qq("See example data and metadata files written into output/@{project_dir}/cleaned-data"))
+  message("\n**BEFORE** running the next step, adjust the Phases of the experiment in Excel!!\n")
+ 
 }
 
 

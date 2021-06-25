@@ -14,9 +14,16 @@ freq <- "mgkgd"
 veh_color <- "#1e81b0" # blue
 tx_color <- "#ed9942" # orange
 
+## BP parameters
+FILTER_OUT_LESS_THAN_CYCLES <- 5
+
 ################################################
 ########### SOURCE FILES ######################
 ################################################
+
+fct_phases <- c("training", "baseline", "vehicle", "treatment", "treatment 2x")
+tx_phases <- c("treatment", "treatment 2x")
+
 
 source(file.path("scripts", "process-data.R"))
 source(file.path("scripts", "main.R"))

@@ -27,9 +27,6 @@ library(randomizr)
 
 run_main <- function(my_project_dir){
 
-  fct_phases <- c("training", "baseline", "vehicle", "treatment", "treatment 2x")
-  tx_phases <- c("treatment", "treatment 2x")
-  
   my_cur_dir <- getwd()
   data_dir <- file.path(my_cur_dir, "data", my_project_dir)
   dir.create(data_dir, showWarnings = FALSE)
@@ -43,16 +40,7 @@ run_main <- function(my_project_dir){
   if(!file.exists(full_path_fn)) {
     stop(qq("@{full_path_fn} does not exist."))
   }
-  
-  #' other removed fn denotes other reasons why you might not want to include a mouse's data for a specific day
-  removed_dir <- file.path(output_dir, "removed")
-  other_removed_fn <- file.path(removed_dir, qq("other-removed_@{drug_name}_@{drug_dosage}_trial-@{trial_num}.csv"))
-  if (!file.exists(other_removed_fn)) {
-    dir.create(removed_dir, recursive = T, showWarnings = F)
-    message("Created output/removed directory. You can edit this in excel.")
-    write_lines(x = c("Specimen Name",	"Date",	"group", "n",	"reason"), file = other_removed_fn, sep = ",")
-  }
-  
+
   attr_df <- tibble(`Specimen Name` = str_c("M",seq(1, 12, 1)), 
                     shape_id = c(0:6,10:14)) 
   
@@ -61,16 +49,18 @@ run_main <- function(my_project_dir){
     dplyr::select(`Specimen Name`, Systolic, Mean, Rate, `Cycle #`, `Date`, Phase) %>%
     mutate(Date = as.Date(Date, "GMT")) %>%
     arrange(Date, `Specimen Name`, `Cycle #`)
-  
-  if(any("FILL IN" %in% data_temp_b$Phase)){
-    stop("You must adjust the phases in the final excel file to one of:\ntraining, baseline, vehicle, treatment, treatment 2x")
-  }
+
   
   num_mice <- nrow(data_temp_b %>% distinct(`Specimen Name`))
   data_temp <- data_temp_b %>%
     mutate(`Specimen Name` = factor(`Specimen Name`, levels = str_c("M", seq(1, num_mice, 1)))) %>%
     mutate(Phase = factor(Phase, levels = fct_phases)) %>%
     arrange(Phase, `Specimen Name`) 
+  
+  if(any("FILL IN" %in% data_temp_b$Phase)){
+    message("There was an error. Please see example data and metadata in data/my-project/cleaned-data folder")
+    stop("You must adjust the phases in the final excel file to one of:\ntraining, baseline, vehicle, treatment, treatment 2x")
+  }
   
   meta_df_all <- read_excel(full_path_fn,
                             sheet = 2) %>%
@@ -81,6 +71,7 @@ run_main <- function(my_project_dir){
            `Date` = as.factor(Date),
            `Body weight (g)` = as.numeric(`Body weight (g)`)) %>%
     group_by(`Specimen Name`)
+
   
   # Check dead mice
   dead_mice <- meta_df_all %>% 
@@ -96,6 +87,7 @@ run_main <- function(my_project_dir){
                         meta_df_temp, by = "Specimen Name") %>%
     arrange(`Specimen Name`) %>%
     anti_join(dead_mice %>% distinct(`Specimen Name`), by = "Specimen Name")
+  
   
   # https://cran.r-project.org/web/packages/randomizr/vignettes/randomizr_vignette.html
   for_randomization_df <- data_temp %>% 
