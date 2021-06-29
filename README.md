@@ -20,7 +20,7 @@ cd tailcuff
 ```
 mkdir data
 ```
-2. Create `project_dir`: create another directory UNDER the `data` directory e.g. 'sorafenib-pilot3'
+2. Create `project_dir`: create another directory UNDER the `data` directory e.g. 'data/sorafenib-pilot3'
 ```
 mkdir data/<project_name>
 ```
