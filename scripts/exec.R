@@ -6,8 +6,14 @@
 ####################################################################
 
 #' @EDIT-1
-#' [1] create data directory and and then a project sub-directory into which you dump csv files 
-#' [2] edit these variables below to your liking
+#' [1] set the working directory to the cloned repository 
+#' (Option + right-click on cloned directory in finder, select 'copy as Pathname')
+#' Paste this into setwd()
+
+setwd("~/Desktop/tailcuff")
+
+#' [2] create data directory and and then a project sub-directory into which you dump csv files 
+#' [3] edit these variables below to your liking
 
 # THAT project directory will be used perpetually
 my_project_dir <- "sor-pilot3" # this is the name of the project under the "data" directory

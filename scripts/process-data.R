@@ -12,7 +12,6 @@ library(GetoptLong)
 ########## FUNCTIONS ############
 ###################################
 
-setwd(getwd())
 
 #' @param project_dir the parent directory of your data, e.g. data/project_dir/*.xlsx
 #' @note underneath *project_dir* should simply be .xlsx files
@@ -22,7 +21,12 @@ process_data_fn <- function(project_dir){
   raw_data_dir_full <- file.path("data", project_dir)
   dir.create(raw_data_dir_full, showWarnings = FALSE, recursive = TRUE)
   
-  suppressMessages(raw_data_tbl <- tibble(fn = list.files(raw_data_dir_full, full.names = TRUE)) %>%
+  raw_data_tbl_temp <- tibble(fn = list.files(raw_data_dir_full, recursive = TRUE, full.names = TRUE))
+  if (nrow(raw_data_tbl_temp) == 0) {
+    stop("There are no files in the data/<my_project_dir> directory")
+  } 
+  
+  suppressMessages(raw_data_tbl <- raw_data_tbl_temp %>%
     mutate(Date = str_extract(string = fn, pattern = "[0-9][0-9_]{7,}")) %>%
     unnest(cols = c(Date)) %>%
     mutate(Date = as.Date(Date, "%m_%d_%Y")) %>%
@@ -32,8 +36,6 @@ process_data_fn <- function(project_dir){
     relocate(Date, .after = last_col()) %>%
     mutate(Phase = "FILL IN") %>%
     arrange(Date, `Specimen Name`))
-  
-  
   
   clean_output_dir <- file.path("output", project_dir, "cleaned-data")
   example_data_dir <- file.path("examples")
