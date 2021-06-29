@@ -30,13 +30,13 @@ mkdir data/<project_name>
 
 5. First, run all code up until 'RUN-2', including `process_data_fn(project_dir = my_project_dir)`. If all goes well, you will receive a file in `output/sor-pilot3/cleaned-data` called `my_data.csv`. Open this file with Excel, and save it as an `.xslx` file. NOTE the `.xlsx` extension! DO NOT change the name otherwise!
 6. Next, edit the first sheet of this `.xlsx` file with the correct Phase information (training, baseline, or treatment). The date will be automatically extracted from the file name. If the date doesn't look correct, modify it.
-8. Then, open a new sheet in this same document. Copy the metadata for your project into this sheet. See `examples/` for inspiration. The column names in this metadata sheet MUST NOT CHANGE. The `Specimen Name`, `Body weight (g)`, `Date` (of the weight measurement, to the right of weight), `Status`, `Date of death`, and `Machine ID` are critical columns that must be present and cannot be modified. All other columns are auxilliary. 
-9. Finally, run the next two lines of code *after* 'RUN-2', mainly the functions:
+7. Then, open a new sheet in this same document. Copy the metadata for your project into this sheet. See `examples/` for inspiration. The column names in this metadata sheet MUST NOT CHANGE. The `Specimen Name`, `Body weight (g)`, `Date` (of the weight measurement, to the right of weight), `Status`, `Date of death`, and `Machine ID` are critical columns that must be present and cannot be modified. All other columns are auxilliary. 
+8. Finally, run the next two lines of code *after* 'RUN-2', mainly the functions:
 ```
 res_lst <- run_main(my_project_dir)
 run_plots_and_analysis(res_lst, my_project_dir)
 ```
-10. The results will be displayed under `output/<my_project_dir>/results`, in addition to various additional information (e.g. `metadata`)
+9. The results will be displayed under `output/<my_project_dir>/results`, in addition to various additional information (e.g. `metadata`)
 
 
 
