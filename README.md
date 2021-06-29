@@ -15,8 +15,8 @@ mkdir data
 mkdir data/<project_name>
 ```
 3. Copy all of the .csv files from your tailcuff analysis to this `data` folder
-4. Edit the `scripts/exec.R` file and change the variables accordingly
-5. Source/run the `scripts/exec.R` file!
+4. Edit the `scripts/exec.R` file and change the variables accordingly inside Rstudio.
+5. Source/run the `scripts/exec.R` file from inside Rstudio.
 
 
 
