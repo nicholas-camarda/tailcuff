@@ -39,7 +39,7 @@ run_main <- function(my_project_dir){
   #' reads in mega excel file 
   full_path_fn <- file.path(cleaned_data_dir, fn_name)
   if(!file.exists(full_path_fn)) {
-    stop(qq("@{full_path_fn} does not exist."))
+    stop(qq("@{full_path_fn} does not exist. Please see the README and/or 'examples/' for exampels of data and metadata structure.\nUpdate the 'output/<my_project_dir>/cleaned_data/my_data.xlsx file and try again."))
   }
 
   ## Read in the data
