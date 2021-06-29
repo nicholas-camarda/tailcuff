@@ -3,7 +3,17 @@
 ## Installation
 1. Install the latest version of R (https://cran.rstudio.com/bin/macosx/)
 2. Install the latest version of R-studio (https://download1.rstudio.org/desktop/macos/RStudio-1.4.1717.dmg)
-3. Clone this repository into an accessible folder (e.g. ~/Desktop)
+3. Install homebrew and git:
+```
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+brew install git
+```
+6. Clone this repository into an accessible folder (e.g. ~/Desktop):
+```
+cd ~/Desktop # or your favorite directory
+git clone https://github.com/nicholas-camarda/tailcuff.git
+cd tailcuff
+```
 
 ## Usage
 1. Create `data` dir: create a directory called `data` inside this newly cloned directory 
