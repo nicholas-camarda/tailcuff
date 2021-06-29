@@ -5,6 +5,8 @@ data/*
 output/*
 old/*
 
+# other
+.DS_Store
 
 # History files
 .Rhistory
