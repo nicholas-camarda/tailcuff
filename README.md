@@ -3,12 +3,12 @@
 ## Installation
 1. Install the latest version of R (https://cran.rstudio.com/bin/macosx/)
 2. Install the latest version of R-studio (https://download1.rstudio.org/desktop/macos/RStudio-1.4.1717.dmg)
-3. Install homebrew and git:
+3. Install homebrew and git using terminal (my favorite is iTerm2 - https://iterm2.com/). Paste the following into your terminal: 
 ```
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 brew install git
 ```
-4. Clone this repository into an accessible folder (e.g. ~/Desktop):
+4. Clone this repository into an accessible folder (e.g. ~/Desktop) again using terminal:
 ```
 cd ~/Desktop # or your favorite directory
 git clone https://github.com/nicholas-camarda/tailcuff.git
@@ -16,15 +16,15 @@ cd tailcuff
 ```
 
 ## Usage
-1. Create `data` dir: create a directory called `data` inside this newly cloned directory 
+1. Create `data` dir: create a directory called `data` inside this newly cloned directory using terminal:
 ```
 mkdir data
 ```
-2. Create `project_dir`: create another directory UNDER the `data` directory e.g. 'data/sorafenib-pilot3'
+2. Create `project_dir`: create another directory UNDER the `data` directory e.g. 'data/sorafenib-pilot3' using terminal:
 ```
 mkdir data/<project_name>
 ```
-3. Copy all of the .csv files from your tailcuff analysis to this `data` folder
+3. Copy all of the .csv files from your tailcuff analysis to this `data` folder (using terminal or by hand with Finder):
 4. Edit the `scripts/exec.R` file and change the variables accordingly inside Rstudio.
 
 
