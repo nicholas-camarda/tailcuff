@@ -8,7 +8,7 @@
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 brew install git
 ```
-6. Clone this repository into an accessible folder (e.g. ~/Desktop):
+4. Clone this repository into an accessible folder (e.g. ~/Desktop):
 ```
 cd ~/Desktop # or your favorite directory
 git clone https://github.com/nicholas-camarda/tailcuff.git
