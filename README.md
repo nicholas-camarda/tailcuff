@@ -36,6 +36,7 @@ mkdir data/<project_name>
 res_lst <- run_main(my_project_dir)
 run_plots_and_analysis(res_lst, my_project_dir)
 ```
+10. The results will be displayed under `output/<my_project_dir>/results`, in addition to various additional information (e.g. `metadata`)
 
 
 
