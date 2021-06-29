@@ -1,0 +1,7 @@
+Specimen Name	Mouse Unique ID	Gender	Notch	DOB	Wean Date	CageID	Current Age (weeks)	Date ready for Telemetry implant	New CageID	Body weight (g)	Date	Status	Date of death	Machine ID
+M1	1A	Male	BN	2021-05-03	2021-05-24	662069	8.14	2021-06-28		22.1	2021-06-16	Alive		1
+M2	2A	Male	NN	2021-05-03	2021-05-24	662069	8.14	2021-06-28		22.1	2021-06-16	Alive		1
+M3	1B	Male	RN	2021-05-03	2021-05-24	662069	8.14	2021-06-28		22.1	2021-06-16	Alive		2
+M1	1A	Male	BN	2021-05-03	2021-05-24	662069	8.14	2021-06-28		22.1	2021-06-18	Alive		1
+M2	2A	Male	NN	2021-05-03	2021-05-24	662069	8.14	2021-06-28		22.1	2021-06-18	Alive		1
+M3	1B	Male	RN	2021-05-03	2021-05-24	662069	8.14	2021-06-28		22.1	2021-06-18	Dead	2021-06-20	2

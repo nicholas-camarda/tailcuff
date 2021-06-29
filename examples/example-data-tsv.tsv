@@ -1,0 +1,9 @@
+Specimen Name	Systolic	Mean	Rate	Cycle	Date	Phase
+M1	123	140	600	1	1994-04-04	training
+M1	150	120	700	2	1994-04-04	training
+M2	123	140	600	1	1994-04-04	training
+M2	150	120	700	2	1994-04-04	training
+M1	123	140	600	1	1994-04-04	baseline
+M1	150	120	700	2	1994-04-04	baseline
+M2	123	140	600	1	1994-04-04	baseline
+M2	150	120	700	2	1994-04-04	baseline

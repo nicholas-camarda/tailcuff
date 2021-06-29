@@ -35,6 +35,6 @@ source(file.path("scripts", "analysis.R"))
 
 process_data_fn(project_dir = my_project_dir)
 res_lst <- run_main(my_project_dir)
-plots_and_analysis(res_lst, my_project_dir)
+run_plots_and_analysis(res_lst, my_project_dir)
 
 

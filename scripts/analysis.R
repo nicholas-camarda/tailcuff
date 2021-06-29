@@ -4,12 +4,15 @@ if (!file.exists(webshot:::find_phantom())){
 }
 
 
-plots_and_analysis <- function(res_lst, my_project_dir){
+run_plots_and_analysis <- function(res_lst, my_project_dir){
   
   my_cur_dir <- getwd()
   data_dir <- file.path(my_cur_dir, "data", my_project_dir)
   output_dir <- file.path(my_cur_dir, "output", my_project_dir)
   cleaned_data_dir <- file.path(output_dir, "cleaned-data")
+  
+  results_dir <- file.path(output_dir, "results")
+  dir.create(results_dir, recursive = T, showWarnings = FALSE)
   
   # theme attributes
   my_theme <- theme_stata() + 
@@ -22,6 +25,10 @@ plots_and_analysis <- function(res_lst, my_project_dir){
   data <- res_lst$data_df
   meta_df_all <- res_lst$meta_data_df
   meta_df_w_assign <- res_lst$meta_summary
+  
+  if(is.null(meta_df_all) | is.null(meta_df_w_assign)){
+    stop("Please create a metadata sheet in the my_data.xlsx file according to the examples in the ./examples folder")
+  }
   
   num_mice_per_group <- meta_df_w_assign %>% 
     group_by(group) %>%
@@ -78,13 +85,13 @@ plots_and_analysis <- function(res_lst, my_project_dir){
     geom_text(data = meta_df_w_assign, 
               aes(x = `Specimen Name`, y = `Average body weight (g)`, 
                   label = round(`Average body weight (g)`,1), vjust = 2.5), 
-              hjust = 0.5, color = "black", size = 5, 
+              hjust = 0.5, color = "black", size = rel(0.75), 
               inherit.aes = FALSE) 
-  
-  
-  dates <- unique(meta_df_all$Date)
-  reps <- length(unique(meta_df_all$`Specimen Name`))
-  date_tbl <- tibble(Date = rep(dates, reps))
+
+  date_tbl <- meta_df_all %>% 
+    ungroup() %>%
+    distinct(`Specimen Name`, Date) %>%
+    select(Date)
   
   weight_change_df <- meta_df_weight %>%
     arrange(Date) %>%
@@ -105,7 +112,7 @@ plots_and_analysis <- function(res_lst, my_project_dir){
     scale_fill_manual(name = "Weight change (g)", values = named_color_vec) + 
     scale_y_continuous(breaks = seq(min_weight_chg, max_weight_chg)) +
     scale_x_date(breaks = unique(weight_change_df$Date)) +
-    theme(axis.text.x = element_text(angle = 75, size = 6, vjust = 0.5),
+    theme(axis.text.x = element_text(angle = 75, size = rel(0.75), vjust = 0.5),
           axis.text.y = element_text(hjust = 0.55),
           panel.spacing = unit(0.5, "lines")) +
     labs(title = "Weight change (g) since beginning of experiment\n") +
@@ -131,15 +138,18 @@ plots_and_analysis <- function(res_lst, my_project_dir){
     ylab("Average daily weight change (g)") + 
     # scale_y_continuous(breaks = seq(-10,10,.2)) +
     scale_x_date(breaks = unique(weight_change_df$Date)) +
-    theme(axis.text.x = element_text(angle = 75, size = 8, vjust = 0.5),
+    theme(axis.text.x = element_text(angle = 75, size = rel(0.75), vjust = 0.5),
           axis.text.y = element_text(hjust = 0.55),
           panel.spacing = unit(1, "lines")) +
     labs(title = "Average weight change (g) across all mice\nsince beginning of experiment\n")  
   
   # plot arranged weight data
-  ggarrange(weight_change_avg_g, 
+  weight_lst_g <- ggarrange(weight_change_avg_g, ncol = 1,
             ggarrange(specimen_weight_g, weight_change_g, ncol = 2), 
-            nrow = 2)
+            nrow = 2, heights = c(1, 0.8, 0.8)) #
+  
+  weight_res_fn <- file.path(results_dir, "weight_change.pdf")
+  ggsave(weight_lst_g, file = weight_res_fn, width = 12, height = 8)
   
   remove_bad_days_df1 <- data %>%
     group_by(`Specimen Name`, Date, group, color) %>%
@@ -155,14 +165,15 @@ plots_and_analysis <- function(res_lst, my_project_dir){
     scale_x_date(breaks = unique(remove_bad_days_df1$Date)) + 
     my_theme +
     scale_y_continuous(breaks=seq(0,35,5)) +
-    theme(axis.text.x = element_text(angle = 60, hjust=1, size = 5)) +
+    theme(axis.text.x = element_text(angle = 60, hjust=1, size = rel(0.75))) +
     ylab("Number of Accepted Cycles") +
     ggtitle("Accepted cycles per mouse over time") + 
     facet_grid(cols = vars(`Specimen Name`))
   
-  accepted_cycles_g
+  accepted_cycles_lst_g <- ggarrange(accepted_cycles_g, ncol = 1, nrow = 1, heights = c(0.4))
   
-  
+  cycles_res_fn <- file.path(results_dir, "accepted_cycles.pdf")
+  ggsave(accepted_cycles_lst_g, file = cycles_res_fn, width = 12, height = 8)
   
   ### Blood pressure data analysis
   
@@ -251,7 +262,7 @@ plots_and_analysis <- function(res_lst, my_project_dir){
     my_theme + 
     ggtitle("Outliers marked") + 
     facet_grid(~ Date) +
-    theme(axis.text.x = element_text(angle = 60, hjust=1, size = 7),
+    theme(axis.text.x = element_text(angle = 60, hjust=1, size = rel(0.75)),
           axis.text.y = element_text(hjust = 0.5)) 
   
   
@@ -263,15 +274,16 @@ plots_and_analysis <- function(res_lst, my_project_dir){
                aes(x = `Specimen Name`, y = Systolic), color = "magenta", shape = 17, size = 3, alpha = 0.3) + 
     # scale_y_continuous(breaks = seq(50,220,20)) + 
     my_theme + 
-    theme(axis.text.x = element_text(angle = 60, hjust=1, size = 7),
+    theme(axis.text.x = element_text(angle = 60, hjust=1, size = rel(0.75)),
           axis.text.y = element_text(hjust = 0.5)) +
     ggtitle("Outliers removed") + 
     facet_wrap(~ Date, ncol = 5) + 
     labs(caption = "Pink triangles = where outliers used to be!")
   
-  ggarrange(with_outliers_g, without_outliers_g, nrow = 2)
+  outliers_lst_g <- ggarrange(with_outliers_g, without_outliers_g, nrow = 2)
   
-  
+  outliers_res_fn <- file.path(results_dir, "outliers.pdf")
+  ggsave(outliers_lst_g, file = outliers_res_fn, width = 12, height = 8)
   ### analysis
   
   outlier_mice_df <- final_filtered_data %>% 
@@ -284,16 +296,18 @@ plots_and_analysis <- function(res_lst, my_project_dir){
   #' @Note main df! this is specimen average
   specimen_avg_data_df <- final_filtered_data %>% 
     summarize(`specimen_mean_systolic` = mean(Systolic), 
-              `specimen_median_systolic` = median(Systolic),
-              specimen_sd_systolic = sd(Systolic),
-              specimen_sem = specimen_sd_systolic / sqrt(num_mice), 
-              specimen_avg_hr = mean(Rate),
+              # `specimen_median_systolic` = median(Systolic),
+              # specimen_sd_systolic = sd(Systolic),
+              specimen_systolic_sem = calculate_sem(Systolic),
+              specimen_hr_mean = mean(Rate),
+              specimen_hr_sem = calculate_sem(Rate),
               .groups = "keep") %>%
     # necessary?
     ungroup() %>%
     mutate(Phase = factor(Phase, levels = fct_phases))
   
-  cat(qq("\n## Trial @{trial_num} | @{drug_name} @{drug_dosage} @{freq}\n"))
+  title_ <- qq("\n## Trial @{trial_num} | @{drug_name} @{drug_dosage} @{freq}\n")
+  cat(title_)
   cutoff_dates_df <- specimen_avg_data_df %>%
     group_by(Phase) %>%
     arrange(Date) %>%
@@ -319,51 +333,16 @@ plots_and_analysis <- function(res_lst, my_project_dir){
     summarize(grp_systolic_mean = mean(specimen_mean_systolic),
               grp_systolic_sd = sd(specimen_mean_systolic),
               grp_systolic_sem = calculate_sem(specimen_mean_systolic),
-              grp_hr_mean = mean(specimen_avg_hr), 
-              grp_hr_sem = calculate_sem(specimen_avg_hr), .groups = "keep") 
+              grp_hr_mean = mean(specimen_hr_mean), 
+              grp_hr_sem = calculate_sem(specimen_hr_mean), .groups = "keep") 
   
   phase_wise_bp_and_sem <- specimen_avg_data_df %>%
     group_by(group, Phase) %>% 
     summarize(phase_systolic_mean = mean(specimen_mean_systolic),
               phase_systolic_sd = sd(specimen_mean_systolic),
               phase_systolic_sem = calculate_sem(specimen_mean_systolic),
-              phase_hr_mean = mean(specimen_avg_hr), 
-              phase_hr_sem = calculate_sem(specimen_avg_hr), .groups = "keep") 
-  
-  ######
-  # ggplot(data = phase_wise_bp_and_sem, 
-  #        aes(fill = `group`, x = group, y = phase_systolic_mean)) +
-  #   
-  #   geom_bar(position = "dodge", stat = "identity", width = 0.5) +
-  #   # stat_summary(fun ="mean", color = "cyan", show.legend = F) +
-  #   
-  #   geom_point(group_wise_bp_and_sem, 
-  #              mapping = aes(x = group, y = grp_systolic_mean, shape = `Specimen Name`), 
-  #              show.legend = TRUE, inherit.aes = FALSE) + 
-  #   scale_shape_manual(values = shape_ids) +
-  #   
-  #   # text by group and phase
-  #   geom_label(data = phase_wise_bp_and_sem,
-  #              aes(x = `group`, y = max(phase_systolic_mean) + 35,
-  #                  label = round(phase_systolic_mean,1)),
-  #              hjust = 0.5, color = "black", size = 3,
-  #              inherit.aes = FALSE, show.legend = F) +
-  #   
-  #   geom_errorbar(data = phase_wise_bp_and_sem,
-  #                 aes(x = group, ymin=`phase_systolic_mean`-phase_systolic_sem, 
-  #                     ymax=`phase_systolic_mean`+phase_systolic_sem), width=.2,
-  #                 position=position_dodge(0.05), show.legend = F, inherit.aes = FALSE) +
-  #   # change fill colors
-  #   scale_fill_manual(name = "group", values = named_color_vec) +
-  #   my_theme +
-  #   # scale_y_continuous(breaks=seq(90, 220, 10)) +
-  #   theme(axis.text.x = element_text(angle = 60, hjust=1),
-  #         axis.text.y = element_text(hjust = 0.5)) +
-  #   ylab("Average Systolic BP") +
-  #   ggtitle("Average Systolic BP across phases") +
-  #   facet_grid(cols = vars(Phase), scales = "free_x") 
-  
-  
+              phase_hr_mean = mean(specimen_hr_mean), 
+              phase_hr_sem = calculate_sem(specimen_hr_mean), .groups = "keep") 
   
   three_day_df <- specimen_avg_data_df %>%
     group_by(`Specimen Name`, Phase) %>%
@@ -442,10 +421,110 @@ plots_and_analysis <- function(res_lst, my_project_dir){
     ggtitle("Average heart rate across phases") +
     facet_grid(cols = vars(Phase), scales = "free_x") 
   
-  ggarrange(bp_avg_g, hr_avg_g, ncol = 2, common.legend = TRUE)
+  avg_lst_g <- ggarrange(bp_avg_g, hr_avg_g, nrow = 2, common.legend = TRUE)
+  
+  avg_res_fn <- file.path(results_dir, "averages.pdf")
+  ggsave(avg_lst_g, file = avg_res_fn, width = 12, height = 15)
+  
+  ## DIFFERENCE FROM BASELINE
+  vehicle_avg_3day <- specimen_avg_data_df %>%
+    filter(Phase == "baseline") %>%
+    group_by(`Specimen Name`, group, color, Phase) %>%
+    summarize(specimen_mean_systolic = mean(specimen_mean_systolic),
+              specimen_systolic_sem  = calculate_sem(specimen_mean_systolic), 
+              specimen_hr_mean = mean(specimen_hr_mean),
+              specimen_hr_sem  = calculate_sem(specimen_hr_mean), 
+              .groups = "keep") %>%
+    mutate(Date = as.factor(cutoff_dates_df %>% filter(Phase == "baseline") %>% pluck("date_range")))
   
   
+  time_series_avg_diff_by_mouse_temp1 <- specimen_avg_data_df %>%
+    filter(!(Phase %in% c("baseline", "training", "vehicle"))) %>%
+    mutate(Date = as.factor(Date))
+  
+  if (nrow(time_series_avg_diff_by_mouse_temp1) != 0) {
+    new_levels <- c(levels(vehicle_avg_3day$Date[1]), levels(time_series_avg_diff_by_mouse_temp1$Date))
+    
+    time_series_diff <- bind_rows(vehicle_avg_3day, time_series_avg_diff_by_mouse_temp1) %>%
+      mutate(Date = factor(Date, levels = new_levels)) %>%
+      group_by(`Specimen Name`) %>%
+      arrange(`Specimen Name`, Date) %>%
+      mutate(systolic_diff = specimen_mean_systolic - specimen_mean_systolic[1L],
+             hr_diff = specimen_hr_mean - specimen_hr_mean[1L]) %>%
+      mutate(systolic_sem_diff = calculate_sem(systolic_diff),
+             hr_sem_diff = calculate_sem(hr_diff)) %>%
+      arrange(Phase) %>%
+      dplyr::select(-c(specimen_mean_systolic, specimen_systolic_sem, specimen_hr_mean, specimen_hr_sem))
+    
+    bp_diff_g <- ggplot(time_series_diff,
+           aes(x = `Date`,
+               y = systolic_diff, group = `group`, 
+               color = `group`, fill = `group`)) +
+      geom_point(show.legend = T) +
+      geom_line() +
+      geom_bar(position = "dodge", stat = "identity", width = 0.5) + 
+      my_theme +
+      geom_errorbar(aes(ymin = systolic_diff - systolic_sem_diff,
+                        ymax = systolic_diff + systolic_sem_diff), width=.2,
+                    position=position_dodge(0.05)) +
+      theme(axis.text.x = element_text(angle = 60, hjust=1),
+            axis.text.y = element_text(hjust = 0.5)) +
+      labs(title = "BP difference from baseline") +
+      ylab("Systolic blood pressure (mmHg)") +
+      scale_color_manual(name = "group", values = named_color_vec) +
+      scale_fill_manual(name = "group", values = named_color_vec) 
+    
+    hr_diff_g <- ggplot(time_series_diff,
+                        aes(x = `Date`,
+                            y = hr_diff, group = `group`, 
+                            color = `group`, fill = `group`)) +
+      geom_point(show.legend = T) +
+      geom_line() +
+      geom_bar(position = "dodge", stat = "identity", width = 0.5) + 
+      my_theme +
+      geom_errorbar(aes(ymin = hr_diff - hr_sem_diff,
+                        ymax = hr_diff + hr_sem_diff), width=.2,
+                    position=position_dodge(0.05)) +
+      theme(axis.text.x = element_text(angle = 60, hjust=1),
+            axis.text.y = element_text(hjust = 0.5)) +
+      labs(title = "Heart rate difference from baseline") +
+      ylab("Heart rate (bpm)") +
+      scale_color_manual(name = "group", values = named_color_vec) +
+      scale_fill_manual(name = "group", values = named_color_vec) 
+    
+   diff_lst_g <- ggarrange(bp_diff_g, hr_diff_g, ncol = 2, common.legend = TRUE)
+   
+  } else {
+    diff_lst_g <- ggplot()
+  }
+  
+  diff_res_fn <- file.path(results_dir, "diff.pdf")
+  ggsave(diff_lst_g, file = diff_res_fn, width = 12, height = 8)
+  
+  
+  # cutoff dates calculated early on
+  names_chr <- cutoff_dates_df %>% pluck("Phase")
+  ranges_chr <- cutoff_dates_df %>% pluck("date_range")
+  formatted_ranges <- str_c(names_chr, ranges_chr, sep = ": ", collapse = "\n")
 
+  summary_boxplots_g <- ggplot(final_filtered_data, aes(x = `Specimen Name`, y = `Systolic`, group = `Specimen Name`, fill = `group`)) +
+    geom_boxplot(position = "dodge", alpha=0.8) +
+    stat_summary(fun.y="mean", color = "cyan", show.legend = F) +
+    scale_y_continuous(breaks=seq(70,250,10)) +
+    # scale_fill_jco() +
+    scale_fill_manual(name = "group", values = named_color_vec) +
+    labs(title = "Boxplots of Mice Systolic BP by Tail-cuff by Phase",
+         subtitle = formatted_ranges) +
+    ylab("Systolic blood pressure (mmHg)") +
+    my_theme +
+    theme(axis.title.y = element_text(hjust = 0.5)) +
+    geom_label(data = group_wise_bp_and_sem,
+               aes(label = round(grp_systolic_mean,1),
+                   x = `Specimen Name`, hjust = 0.5, y = 200),
+               inherit.aes = FALSE) +
+    facet_grid(cols = vars(Phase))
   
+  summary_res_fn <- file.path(results_dir, "summary.pdf")
+  ggsave(summary_boxplots_g, file = summary_res_fn, width = 12, height = 8)
 }
 

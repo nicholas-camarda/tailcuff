@@ -36,32 +36,56 @@ process_data_fn <- function(project_dir){
   
   
   clean_output_dir <- file.path("output", project_dir, "cleaned-data")
+  example_data_dir <- file.path("examples")
   dir.create(clean_output_dir, recursive = T, showWarnings = F)
+  dir.create(example_data_dir, recursive = T, showWarnings = F)
   write_csv(raw_data_tbl, file.path(clean_output_dir, "my_data.csv"))
   
   
   # example data and metadata - make once
-  example_data_fn <- file.path(cleaned_data_dir, "example-data.pdf")
-  example_metadata_fn <- file.path(cleaned_data_dir, "example-metadata.pdf")
+  example_data_fn <- file.path(example_data_dir, "example-data.pdf")
+  example_data_tsv_fn <- file.path(example_data_dir, "example-data-tsv.tsv")
+  example_metadata_fn <- file.path(example_data_dir, "example-metadata.pdf")
+  example_metadata_tsv_fn <- file.path(example_data_dir, "example-metadata-tsv.tsv")
   if (!file.exists(example_data_fn) | !file.exists(example_metadata_fn)) {
     message(qq("Writing example data and metadata files, for reference, into @{cleaned_data_dir}"))
     
+    example_data_df <- tribble(~`Specimen Name`, ~Systolic, ~Mean, ~Rate, ~Cycle, ~Date, ~Phase,
+                               "M1", 123, 140, 600, 1, as.Date("1994-04-04"), "training",
+                               "M1", 150, 120, 700, 2, as.Date("1994-04-04"), "training",
+                               "M2", 123, 140, 600, 1, as.Date("1994-04-04"), "training",
+                               "M2", 150, 120, 700, 2, as.Date("1994-04-04"), "training",
+                               "M1", 123, 140, 600, 1, as.Date("1994-04-04"), "baseline",
+                               "M1", 150, 120, 700, 2, as.Date("1994-04-04"), "baseline",
+                               "M2", 123, 140, 600, 1, as.Date("1994-04-04"), "baseline",
+                               "M2", 150, 120, 700, 2, as.Date("1994-04-04"), "baseline")
     # make up an example that doesn't rely on previousyl stored data
-    kable(head(data_temp_b, n = 15), caption = "Metadata", align = "c") %>%
+    kable(head(example_data_df, n = 15), caption = "Metadata", align = "c") %>%
       column_spec(column = c(ncol(data_temp_b)), background = "greenyellow") %>%
       kable_styling("striped") %>%
       save_kable(example_data_fn)
+    # for easy editing
+    write_tsv(example_data_df, file = example_data_tsv_fn)
     
-    kable(head(meta_df_all %>% arrange(`Date`, `Specimen Name`)), caption = "Metadata", align = "c") %>%
+    example_meta_df <- tribble(~"Specimen Name", ~"Mouse Unique ID",	~"Gender",	~"Notch",	~"DOB",	~"Wean Date",	~"CageID",	~"Current Age (weeks)",	~"Date ready for Telemetry implant",	~"New CageID",	~"Body weight (g)", ~"Date",	~"Status",	~"Date of death", ~"Machine ID",
+                               "M1", "1A", "Male", "BN", "2021-05-03", "2021-05-24", "662069", "8.14", "2021-06-28", "", "22.1", "2021-06-16", "Alive", "", 1,
+                               "M2", "2A", "Male", "NN", "2021-05-03", "2021-05-24", "662069", "8.14", "2021-06-28", "", "22.1", "2021-06-16", "Alive", "", 1,
+                               "M3", "1B", "Male", "RN", "2021-05-03", "2021-05-24", "662069", "8.14", "2021-06-28", "", "22.1", "2021-06-16", "Alive", "", 2,
+                               "M1", "1A", "Male", "BN", "2021-05-03", "2021-05-24", "662069", "8.14", "2021-06-28", "", "22.1", "2021-06-18", "Alive", "", 1,
+                               "M2", "2A", "Male", "NN", "2021-05-03", "2021-05-24", "662069", "8.14", "2021-06-28", "", "22.1", "2021-06-18", "Alive", "", 1,
+                               "M3", "1B", "Male", "RN", "2021-05-03", "2021-05-24", "662069", "8.14", "2021-06-28", "", "22.1", "2021-06-18", "Dead", "2021-06-20", 2)
+                      
+    kable(example_meta_df, caption = "Metadata", align = "c") %>%
       kable_styling("striped") %>%
       save_kable(example_metadata_fn)
+    write_tsv(example_meta_df, file = example_metadata_tsv_fn)
+  
     message("Done!")
   }
   
   message(qq("Done! Check output/@{project_dir}/cleaned-data"))
-  message(qq("See example data and metadata files written into output/@{project_dir}/cleaned-data"))
+  message(qq("See example data and metadata files written into examples/"))
   message("\n**BEFORE** running the next step, adjust the Phases of the experiment in Excel!!\n")
- 
 }
 
 
