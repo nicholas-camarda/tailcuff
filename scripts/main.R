@@ -131,7 +131,7 @@ run_main <- function(my_project_dir){
   #' *random_seed* = the random seed, 
   #' *machine_prop* = the proportion of veh/sun samples assigned to each machine (1 means equal proportions of veh/tx assigned to each machine)
   #' *num_veh* and *num_tx* = the number of samples in each group
-  get_random_assign <- function(vec, m_each_ = c(4,6), tol_diff = 3) {
+  get_random_assign <- function(vec, m_each_ = c(4,6), tol_diff = 2) {
     rand <- sample(9999,1)
     set.seed(rand)
     # mean const initialize
