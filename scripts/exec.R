@@ -1,15 +1,23 @@
-# create data directory and and then a project sub-directory into which you dump csv files 
+####################################################################
+############# TAILCUFF BP ANALYSIS USER PARAMETERS ################
+####################################################################
+
+#' @EDIT-1
+#' [1] create data directory and and then a project sub-directory into which you dump csv files 
+#' [2] edit these variables below to your liking
+
 # THAT project directory will be used perpetually
-my_project_dir <- "sor-pilot3" # this will be placed under the 'data' directory
+my_project_dir <- "sor-pilot3" # this is the name of the project under the "data" directory
 fn_name <- "my_data.xlsx"
 
+#' @EDIT-2
 # NO "/" allowed in these variables!!
-drug_name <- "sorafenib"
-drug_dosage <- "300"
-trial_num <- "3"
-freq <- "mgkgd"
+drug_name <- "sorafenib" # the name of the drug you are experimenting with, in quotes
+drug_dosage <- "300" # the dosage of the drug, in quotes
+trial_num <- "3" # the trial number (1,2,3), in quotes
+freq <- "mgkgd" # the amount of drug per kg of body weight, per day, in quotes
 
-# pick your colors! only HEX
+#' @EDIT-3 pick your colors! only HEX
 # For inspiration -- https://www.colorhexa.com/ 
 veh_color <- "#1e81b0" # blue
 tx_color <- "#ed9942" # orange
@@ -17,6 +25,8 @@ tx_color <- "#ed9942" # orange
 ## BP parameters
 FILTER_OUT_LESS_THAN_CYCLES <- 5
 
+
+############# DO NOT EDIT ####################
 ################################################
 ########### SOURCE FILES ######################
 ################################################

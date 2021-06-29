@@ -1,7 +1,7 @@
 # check for packages that need to be installed
 # message("Checking for required packages...")
 list_of_packages <- c("tidyverse", "rstatix", "ggthemes", "ggforce", "ggsci", "ggpubr", 
-                      "readxl", "forcats", "knitr", "kableExtra", "gridExtra", "GetoptLong", "zoo", "randomizr")
+                      "readxl", "forcats", "knitr", "kableExtra", "gridExtra", "GetoptLong", "zoo", "randomizr", "magick")
 new_packages <- list_of_packages[!(list_of_packages %in% installed.packages()[,"Package"])]
 if(length(new_packages)) install.packages(new_packages)
 # message("Done!")
@@ -19,6 +19,7 @@ library(readxl)
 library(forcats)
 library(knitr)
 library(kableExtra)
+library(magick)
 library(gridExtra)
 library(GetoptLong)
 library(zoo)

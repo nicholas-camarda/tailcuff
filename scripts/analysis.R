@@ -3,6 +3,13 @@ if (!file.exists(webshot:::find_phantom())){
   webshot::install_phantomjs()
 }
 
+#' @note helper function to calculate the standard error of the mean
+#' @param x numeric vector on which to calculate sem
+calculate_sem <- function(x) {
+  return(sd(x, na.rm = TRUE) / sqrt(length(x)))
+}
+
+
 
 run_plots_and_analysis <- function(res_lst, my_project_dir){
   
@@ -165,7 +172,8 @@ run_plots_and_analysis <- function(res_lst, my_project_dir){
     scale_x_date(breaks = unique(remove_bad_days_df1$Date)) + 
     my_theme +
     scale_y_continuous(breaks=seq(0,35,5)) +
-    theme(axis.text.x = element_text(angle = 60, hjust=1, size = rel(0.75))) +
+    theme(axis.text.x = element_text(angle = 60, hjust=1, size = rel(0.75)),
+          axis.text.y = element_text(hjust = 0.5)) +
     ylab("Number of Accepted Cycles") +
     ggtitle("Accepted cycles per mouse over time") + 
     facet_grid(cols = vars(`Specimen Name`))
@@ -323,10 +331,6 @@ run_plots_and_analysis <- function(res_lst, my_project_dir){
   kable(cutoff_dates_df, caption = "Dates", align = "c") %>%
     kable_styling("striped") %>%
     save_kable(experiment_timeline_fn)
-  
-  calculate_sem <- function(x) {
-    return(sd(x, na.rm = TRUE) / sqrt(length(x)))
-  }
   
   group_wise_bp_and_sem <- specimen_avg_data_df %>%
     group_by(`Specimen Name`, group, Phase) %>% 
@@ -503,11 +507,12 @@ run_plots_and_analysis <- function(res_lst, my_project_dir){
   
   
   # cutoff dates calculated early on
-  names_chr <- cutoff_dates_df %>% pluck("Phase")
-  ranges_chr <- cutoff_dates_df %>% pluck("date_range")
+  names_chr <- cutoff_dates_df %>% filter(Phase != "training") %>% pluck("Phase")
+  ranges_chr <- cutoff_dates_df  %>% filter(Phase != "training") %>% pluck("date_range")
   formatted_ranges <- str_c(names_chr, ranges_chr, sep = ": ", collapse = "\n")
 
-  summary_boxplots_g <- ggplot(final_filtered_data, aes(x = `Specimen Name`, y = `Systolic`, group = `Specimen Name`, fill = `group`)) +
+  summary_boxplots_g <- ggplot(final_filtered_data  %>% filter(Phase != "training"), 
+                               aes(x = `Specimen Name`, y = `Systolic`, group = `Specimen Name`, fill = `group`)) +
     geom_boxplot(position = "dodge", alpha=0.8) +
     stat_summary(fun.y="mean", color = "cyan", show.legend = F) +
     scale_y_continuous(breaks=seq(70,250,10)) +
@@ -517,8 +522,9 @@ run_plots_and_analysis <- function(res_lst, my_project_dir){
          subtitle = formatted_ranges) +
     ylab("Systolic blood pressure (mmHg)") +
     my_theme +
-    theme(axis.title.y = element_text(hjust = 0.5)) +
-    geom_label(data = group_wise_bp_and_sem,
+    theme(axis.title.y = element_text(hjust = 0.5),
+          axis.text.y = element_text(hjust = 0.5)) +
+    geom_label(data = group_wise_bp_and_sem  %>% filter(Phase != "training"),
                aes(label = round(grp_systolic_mean,1),
                    x = `Specimen Name`, hjust = 0.5, y = 200),
                inherit.aes = FALSE) +
