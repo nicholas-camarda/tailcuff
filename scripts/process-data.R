@@ -22,11 +22,13 @@ process_data_fn <- function(project_dir){
   dir.create(raw_data_dir_full, showWarnings = FALSE, recursive = TRUE)
   
   raw_data_tbl_temp <- tibble(fn = list.files(raw_data_dir_full, recursive = TRUE, full.names = TRUE))
+  print(raw_data_tbl_temp)
+  
   if (nrow(raw_data_tbl_temp) == 0) {
     stop("There are no files in the data/<my_project_dir> directory")
   } 
   
-  suppressMessages(raw_data_tbl <- raw_data_tbl_temp %>%
+  raw_data_tbl <- raw_data_tbl_temp %>%
     mutate(Date = str_extract(string = fn, pattern = "[0-9][0-9_]{7,}")) %>%
     unnest(cols = c(Date)) %>%
     mutate(Date = as.Date(Date, "%m_%d_%Y")) %>%
@@ -35,13 +37,14 @@ process_data_fn <- function(project_dir){
     select(-fn) %>%
     relocate(Date, .after = last_col()) %>%
     mutate(Phase = "FILL IN") %>%
-    arrange(Date, `Specimen Name`))
+    arrange(Date, `Specimen Name`)
   
   clean_output_dir <- file.path("output", project_dir, "cleaned-data")
-  example_data_dir <- file.path("examples")
   dir.create(clean_output_dir, recursive = T, showWarnings = F)
-  dir.create(example_data_dir, recursive = T, showWarnings = F)
   write_csv(raw_data_tbl, file.path(clean_output_dir, "my_data.csv"))
+  
+  example_data_dir <- file.path("examples")
+  dir.create(example_data_dir, recursive = T, showWarnings = F)
   
   
   # example data and metadata - make once

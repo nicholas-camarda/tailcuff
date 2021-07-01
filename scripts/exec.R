@@ -10,7 +10,8 @@
 #' (Option + right-click on cloned directory in finder, select 'copy as Pathname')
 #' Paste this into setwd()
 
-setwd("~/Desktop/tailcuff")
+setwd("~/OneDrive - Tufts/phd/ws/tail-cuff")
+# setwd("~/Desktop/tailcuff")
 
 #' [2] create data directory and and then a project sub-directory into which you dump csv files 
 #' [3] edit these variables below to your liking
@@ -33,6 +34,9 @@ tx_color <- "#ed9942" # orange
 
 ## BP parameters
 FILTER_OUT_LESS_THAN_CYCLES <- 5
+
+#' @TO-DO ADD in case control or cohort wide BP analysis modes
+mode <- c("case-control")
 
 
 ############# DO NOT EDIT ####################

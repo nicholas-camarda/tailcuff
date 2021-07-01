@@ -161,15 +161,16 @@ run_plots_and_analysis <- function(res_lst, my_project_dir){
   remove_bad_days_df1 <- data %>%
     group_by(`Specimen Name`, Date, group, color) %>%
     summarize(n = n(), .groups = "keep") %>%
-    arrange(Date, `Specimen Name`) 
+    arrange(Date, `Specimen Name`)  %>% 
+    mutate(Date = as.character(Date))
   
-  accepted_cycles_g <- ggplot(remove_bad_days_df1, aes(color = `group`, x = Date, y = n)) +
+  accepted_cycles_g <- ggplot(remove_bad_days_df1, aes(color = `group`, group = `Specimen Name`, x = Date, y = n)) +
     geom_point(show.legend = F) + 
     geom_line() + 
     geom_smooth(method = "lm", color = "cyan", linetype = "dashed") +
     # geom_bar(position = "dodge", stat = "identity") +
     scale_color_manual(name = "group", values = named_color_vec) +
-    scale_x_date(breaks = unique(remove_bad_days_df1$Date)) + 
+    # scale_x_date(breaks = unique(remove_bad_days_df1$Date)) + 
     my_theme +
     scale_y_continuous(breaks=seq(0,35,5)) +
     theme(axis.text.x = element_text(angle = 60, hjust=1, size = rel(0.75)),
@@ -316,16 +317,27 @@ run_plots_and_analysis <- function(res_lst, my_project_dir){
   
   title_ <- qq("\n## Trial @{trial_num} | @{drug_name} @{drug_dosage} @{freq}\n")
   cat(title_)
-  cutoff_dates_df <- specimen_avg_data_df %>%
-    group_by(Phase) %>%
+  
+  cutoff_dates_df_temp <- specimen_avg_data_df %>%
+    distinct(Date, Phase) %>%
     arrange(Date) %>%
-    summarize(first = first(Date), last = last(Date)) %>%
+    mutate(Phase = as.character(Phase))
+  
+  # segment into groups
+  cutoff_dates_df_temp$sub_g <- c(0,cumsum(as.numeric(with(cutoff_dates_df_temp, Phase[1:(length(Phase)-1)] != Phase[2:length(Phase)])))); 
+  
+  cutoff_dates_df <- cutoff_dates_df_temp %>% 
+    group_by(sub_g, Phase) %>% 
+    summarize(first = first(Date), last = last(Date), .groups = "keep") %>%
     mutate_all(.funs = as.character) %>%
     mutate(date_range = map2_chr(first, last, function(f,l){
       res <- str_c(c(f, l), collapse = " to ")
       return(res)
     })) %>%
-    mutate(`Number of Days` = as.integer(as.Date(last) - as.Date(first)) + 1) 
+    mutate(`Number of Days` = as.integer(as.Date(last) - as.Date(first)) + 1) %>%
+    ungroup() %>%
+    select(-sub_g)
+  
   
   experiment_timeline_fn <- file.path(meta_data_dir, "experiment-timeline.pdf")
   kable(cutoff_dates_df, caption = "Dates", align = "c") %>%
@@ -458,7 +470,8 @@ run_plots_and_analysis <- function(res_lst, my_project_dir){
       mutate(systolic_sem_diff = calculate_sem(systolic_diff),
              hr_sem_diff = calculate_sem(hr_diff)) %>%
       arrange(Phase) %>%
-      dplyr::select(-c(specimen_mean_systolic, specimen_systolic_sem, specimen_hr_mean, specimen_hr_sem))
+      dplyr::select(-c(specimen_mean_systolic, specimen_systolic_sem, specimen_hr_mean, specimen_hr_sem)) %>%
+      mutate(Date = as.character(Date))
     
     bp_diff_g <- ggplot(time_series_diff,
            aes(x = `Date`,
