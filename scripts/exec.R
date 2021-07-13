@@ -36,7 +36,7 @@ tx_color <- "#ed9942" # orange
 FILTER_OUT_LESS_THAN_CYCLES <- 5
 
 #' @TO-DO ADD in case control or cohort wide BP analysis modes
-mode <- c("case-control")
+CASE_CONTROL_MODE <- FALSE
 
 
 ############# DO NOT EDIT ####################
@@ -44,8 +44,8 @@ mode <- c("case-control")
 ########### SOURCE FILES ######################
 ################################################
 
-fct_phases <- c("training", "baseline", "vehicle", "treatment", "treatment 2x")
-tx_phases <- c("treatment", "treatment 2x")
+fct_phases <- c("training", "baseline", "vehicle", "treatment", "HSD + treatment")
+tx_phases <- c("treatment", "HSD + treatment")
 
 
 source(file.path("scripts", "process-data.R"))
