@@ -528,7 +528,7 @@ run_plots_and_analysis <- function(res_lst, my_project_dir){
   
   raw_sys1_g <- ggline(bt_sumarized_diff, x = "Phase", y = "specimen_mean_systolic", 
                        add = c("mean_se", "jitter"),
-                       color = "group", palette = "jco", ggtheme = theme_bw(),
+                       color = "group", palette = named_color_vec, ggtheme = theme_bw(),
                        facet.by = "group") + 
     # stat_pvalue_manual(p_vals, label = "p.signif")  +
     ylab("Mean systolic BP (mmHg)") + 
@@ -541,7 +541,7 @@ run_plots_and_analysis <- function(res_lst, my_project_dir){
   
   delta_sys1_g <- ggline(bt_sumarized_diff, x = "Phase", y = "sys_mean_diff", 
                          add = c("mean_se", "jitter"),
-                         color = "group", palette = "jco", ggtheme = theme_bw(),
+                         color = "group", palette = named_color_vec, ggtheme = theme_bw(),
                          facet.by = "group") +
     ylab("Mean systolic BP change\nfrom previous phase (mmHg)") + 
     xlab("Phase") +
@@ -553,7 +553,7 @@ run_plots_and_analysis <- function(res_lst, my_project_dir){
   
   raw_sys2_g <- ggline(bhsdt_sumarized_diff, x = "Phase", y = "specimen_mean_systolic", 
                        add = c("mean_se", "jitter"),
-                       color = "group", palette = "jco", ggtheme = theme_bw(),
+                       color = "group", palette = named_color_vec, ggtheme = theme_bw(),
                        facet.by = "group") + 
     # stat_pvalue_manual(p_vals, label = "p.signif")  +
     ylab("Mean systolic BP (mmHg)") + 
@@ -566,7 +566,7 @@ run_plots_and_analysis <- function(res_lst, my_project_dir){
   
   delta_sys2_g <- ggline(bhsdt_sumarized_diff, x = "Phase", y = "sys_mean_diff", 
                          add = c("mean_se", "jitter"),
-                         color = "group", palette = "jco", ggtheme = theme_bw(),
+                         color = "group", palette = named_color_vec, ggtheme = theme_bw(),
                          facet.by = "group") +
     ylab("Mean systolic BP change\nfrom previous phase (mmHg)") + 
     xlab("Phase") +
@@ -578,7 +578,7 @@ run_plots_and_analysis <- function(res_lst, my_project_dir){
   
   raw_sys3_g <- ggline(thsdt_sumarized_diff, x = "Phase", y = "specimen_mean_systolic", 
                        add = c("mean_se", "jitter"),
-                       color = "group", palette = "jco", ggtheme = theme_bw(),
+                       color = "group", palette = named_color_vec, ggtheme = theme_bw(),
                        facet.by = "group") + 
     # stat_pvalue_manual(p_vals, label = "p.signif")  +
     ylab("Mean systolic BP (mmHg)") + 
@@ -591,7 +591,7 @@ run_plots_and_analysis <- function(res_lst, my_project_dir){
   
   delta_sys3_g <- ggline(thsdt_sumarized_diff, x = "Phase", y = "sys_mean_diff", 
                          add = c("mean_se", "jitter"),
-                         color = "group", palette = "jco", ggtheme = theme_bw(),
+                         color = "group", palette = named_color_vec, ggtheme = theme_bw(),
                          facet.by = "group") +
     ylab("Mean systolic BP change\nfrom previous phase (mmHg)") + 
     xlab("Phase") +
@@ -604,7 +604,7 @@ run_plots_and_analysis <- function(res_lst, my_project_dir){
   
   raw_sys4_g <- ggline(all_sumarized_diff, x = "Phase", y = "specimen_mean_systolic", 
          add = c("mean_se", "jitter"),
-         color = "group", palette = "jco", ggtheme = theme_bw(),
+         color = "group", palette = named_color_vec, ggtheme = theme_bw(),
          facet.by = "group") + 
     # stat_pvalue_manual(p_vals, label = "p.signif")  +
     ylab("Mean systolic BP (mmHg)") + 
@@ -617,151 +617,45 @@ run_plots_and_analysis <- function(res_lst, my_project_dir){
   
   delta_sys4_g <- ggline(all_sumarized_diff, x = "Phase", y = "sys_mean_diff", 
          add = c("mean_se", "jitter"),
-         color = "group", palette = "jco", ggtheme = theme_bw(),
+         color = "group", palette = named_color_vec, ggtheme = theme_bw(),
          facet.by = "group") +
     ylab("Mean systolic BP change\nfrom previous phase (mmHg)") + 
     xlab("Phase") +
     ggtitle("Change in systolic BP by phase") + 
     stat_compare_means(method = 't.test',
       comparisons = my_comparisons, 
-      label = "p.format", paired = TRUE
-    )
+      label = "p.format", paired = TRUE, 
+    ) 
 
 
   sys_bp_g_lst <- ggarrange(raw_sys1_g, delta_sys1_g, 
                             raw_sys2_g, delta_sys2_g, 
                             raw_sys3_g, delta_sys3_g, 
                             raw_sys4_g, delta_sys4_g, 
-                            nrow = 4, ncol = 2, common.legend = TRUE)
+                            nrow = 4, ncol = 2, common.legend = TRUE) 
   
   sys_bp_g_lst_fn <- file.path(results_dir, "bp_change.pdf")
   ggsave(sys_bp_g_lst, file = sys_bp_g_lst_fn, width = 12, height = 18)
+  
+  # # diff by mouse
+  # all_sumarized_diff
+  # 
+  sys_by_day_g <- ggline(all_sumarized_diff, x = "Date", y = "sys_mean_diff", # group = "group",
+                         add = c("mean_se", "jitter"), facet.by = "Phase", scales = "free_x",
+                         color = "group", palette = named_color_vec, ggtheme = theme_bw()) +
+    # geom_smooth(all_sumarized_diff,
+    #             mapping = aes(x = Date, y = sys_mean_diff, group = group, color = group),
+    #             se = TRUE, stat = "smooth", method = "lm",
+    #             inherit.aes = FALSE,
+    #             size = 1.3, linetype = "dashed", alpha = 0.3) +
+    ylab("Mean systolic BP change\nfrom previous phase (mmHg)") +
+    xlab("Date") +
+    ggtitle("Change in systolic BP by phase over time")
+  
 
   
-  # time_series_avg_diff_by_mouse_temp1 <- specimen_avg_data_df %>%
-  #   filter(!(Phase %in% c("baseline", "training", "vehicle"))) %>%
-  #   mutate(Date = as.factor(Date))
-  # 
-  # diffs_df <- three_day_phase_df %>% 
-  #   filter(Phase != "training") %>%
-  #   group_by(group) %>% 
-  #   mutate(mean_diff = c(0, diff(mean_phase)),
-  #          sd_diff = c(0, diff(sd_phase)),
-  #          sem_diff = c(0, diff(sem_phase)))
-  
-  # if (nrow(time_series_avg_diff_by_mouse_temp1) != 0) {
-  #   new_levels <- c(levels(vehicle_avg_3day$Date[1]), levels(time_series_avg_diff_by_mouse_temp1$Date))
-  #   
-  #   time_series_diff <- bind_rows(vehicle_avg_3day, time_series_avg_diff_by_mouse_temp1) %>%
-  #     mutate(Date = factor(Date, levels = new_levels)) %>%
-  #     group_by(`Specimen Name`) %>%
-  #     arrange(`Specimen Name`, Date) %>%
-  #     mutate(systolic_diff = specimen_mean_systolic - specimen_mean_systolic[1L],
-  #            hr_diff = specimen_hr_mean - specimen_hr_mean[1L]) %>%
-  #     mutate(systolic_sem_diff = calculate_sem(systolic_diff),
-  #            hr_sem_diff = calculate_sem(hr_diff)) %>%
-  #     arrange(Phase) %>%
-  #     dplyr::select(-c(specimen_mean_systolic, specimen_systolic_sem, specimen_hr_mean, specimen_hr_sem)) %>%
-  #     mutate(Date = as.character(Date))
-  #   
-  #   bp_diff_g <- ggplot(time_series_diff,
-  #                       aes(x = `Date`,
-  #                           y = systolic_diff, group = `Specimen Name`, 
-  #                           color = `group`, fill = `group`)) +
-  #     geom_point(show.legend = T) +
-  #     geom_line() +
-  #     geom_smooth(aes(x = `Date`,
-  #                     y = systolic_diff, group = `group`, 
-  #                     color = `group`, fill = `group`),
-  #                 se = TRUE, inherit.aes = FALSE, stat="smooth", method = "lm",
-  #                 size = 1.3,
-  #                 linetype ="dashed",
-  #                 alpha = 0.3) + 
-  #     
-  #     # geom_bar(position = "dodge", stat = "identity", width = 0.5) + 
-  #     my_theme +
-  #     geom_errorbar(aes(ymin = systolic_diff - systolic_sem_diff,
-  #                       ymax = systolic_diff + systolic_sem_diff), width=.2,
-  #                   position=position_dodge(0.05)) +
-  #     theme(axis.text.x = element_text(angle = 60, hjust=1),
-  #           axis.text.y = element_text(hjust = 0.5)) +
-  #     labs(title = "BP difference from baseline") +
-  #     ylab("Systolic blood pressure (mmHg)") +
-  #     scale_color_manual(name = "group", values = named_color_vec) +
-  #     scale_fill_manual(name = "group", values = named_color_vec) ; bp_diff_g
-  #   
-  #   hr_diff_g <- ggplot(time_series_diff,
-  #                       aes(x = `Date`,
-  #                           y = hr_diff, group = `Specimen Name`, 
-  #                           color = `group`, fill = `group`)) +
-  #     geom_point(show.legend = T) +
-  #     geom_line() +
-  #     geom_smooth(aes(x = `Date`,
-  #                     y = hr_diff, group = `group`, 
-  #                     color = `group`, fill = `group`),
-  #                 se = TRUE, inherit.aes = FALSE, stat="smooth", method = "lm",
-  #                 size = 1.3,
-  #                 linetype ="dashed",
-  #                 alpha = 0.3) + 
-  #     # geom_bar(position = "dodge", stat = "identity", width = 0.5) + 
-  #     my_theme +
-  #     geom_errorbar(aes(ymin = hr_diff - hr_sem_diff,
-  #                       ymax = hr_diff + hr_sem_diff), width=.2,
-  #                   position=position_dodge(0.05)) +
-  #     theme(axis.text.x = element_text(angle = 60, hjust=1),
-  #           axis.text.y = element_text(hjust = 0.5)) +
-  #     labs(title = "Heart rate difference from baseline") +
-  #     ylab("Heart rate (bpm)") +
-  #     scale_color_manual(name = "group", values = named_color_vec) +
-  #     scale_fill_manual(name = "group", values = named_color_vec) ; hr_diff_g
-  #   
-  #   
-  #   avg_time_series_diff <- time_series_diff %>% 
-  #     group_by(Phase, group) %>%
-  #     summarize(grp_systolic_diff_mean = mean(systolic_diff, na.rm =TRUE), 
-  #               # grp_systolic_diff_sem = calculate_sem(grp_systolic_diff_mean),
-  #               grp_hr_diff_mean = mean(hr_diff, na.rm =TRUE),
-  #               # grp_hr_diff_sem = calculate_sem(grp_hr_diff_mean), 
-  #               .groups = "keep")
-  #   
-  #   
-  #   by_spec <- time_series_diff %>% 
-  #     group_by(`Specimen Name`,group, Phase) %>% 
-  #     summarize(m = mean(systolic_diff),
-  #               sem = calculate_sem(systolic_diff))
-  #   
-  #   bp_diff_avg_g <- ggplot(avg_time_series_diff,
-  #                           aes(x = group,
-  #                               y = grp_systolic_diff_mean, group = `Phase`, 
-  #                               color = `Phase`, fill = `group`)) +
-  # 
-  #     geom_bar(position = "dodge", stat = "identity", width = 0.5) +
-  #     
-  #     geom_point(by_spec,
-  #                mapping = aes(x = group,
-  #                              y = m, group = `Phase`), 
-  #                position = position_dodge(width = 0.5), color = "black", shape = 21, show.legend = T) +
-  #     my_theme +
-  # 
-  #     theme(axis.text.x = element_text(angle = 60, hjust=1),
-  #           axis.text.y = element_text(hjust = 0.5)) +
-  #     labs(title = "Avg BP difference from baseline") +
-  #     ylab("Systolic blood pressure difference\nfrom baseline (mmHg)") +
-  #     facet_grid(cols = vars(Phase),  scales = "free_x") +
-  #   scale_color_manual(name = "group", values = named_color_vec) +
-  #   scale_fill_manual(name = "group", values = named_color_vec) ; bp_diff_avg_g
-  # 
-  #   
-  #   diff_lst_g <- ggarrange(bp_diff_avg_g, ncol = 1,
-  #                           ggarrange(bp_diff_g, hr_diff_g, ncol = 2), 
-  #                           nrow = 2, heights = c(1.5, 1.5, 1.5), common.legend = TRUE); diff_lst_g
-  #   
-  # } else {
-  #   diff_lst_g <- ggplot()
-  # }
-  
-  # diff_res_fn <- file.path(results_dir, "diff.pdf")
-  # ggsave(diff_lst_g, file = diff_res_fn, width = 14, height = 16)
+  sys_bp_by_day_g_lst_fn <- file.path(results_dir, "bp_by_day_change.pdf")
+  ggsave(sys_by_day_g, file = sys_bp_by_day_g_lst_fn, width = 10, height = 6)
   
   # cutoff dates calculated early on
   names_chr <- cutoff_dates_df %>% filter(Phase != "training") %>% pluck("Phase")
