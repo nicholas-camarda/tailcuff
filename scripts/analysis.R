@@ -10,7 +10,7 @@ calculate_sem <- function(x) {
 }
 
 
-
+# main function
 run_plots_and_analysis <- function(res_lst, my_project_dir){
   
   my_cur_dir <- getwd()
@@ -470,192 +470,84 @@ run_plots_and_analysis <- function(res_lst, my_project_dir){
   #   left_join(cutoff_dates_df, by = "Phase")
   # 
   
-  all_sumarized_diff <- three_day_df %>% 
+  
+  # dates_fct <- unique(three_day_df$Date)
+  
+  all_sumarized <- three_day_df %>% 
     filter(Phase != "training") %>%
-    arrange(group) %>%
-    mutate(sys_mean_diff = c(0, diff(specimen_mean_systolic)),
-           hr_mean_diff = c(0, diff(specimen_hr_mean))) %>%
+    arrange(`Specimen Name`, Phase, group, Date) %>%
+    group_by(`Specimen Name`, Phase) %>% 
+    summarize(sys_mean = mean(specimen_mean_systolic),
+              hr_mean = mean(specimen_hr_mean), .groups = "keep") %>%
     left_join(cutoff_dates_df, by = "Phase") %>%
-    mutate(unique_id = make.unique(as.character(`Specimen Name`))) %>% 
+    left_join(three_day_df %>% ungroup() %>% distinct(`Specimen Name`,group), by = "Specimen Name") %>%
     ungroup() %>%
     mutate(Phase = factor(Phase, levels = fct_phases))
   
-  bt_sumarized_diff <- three_day_df %>% 
-    filter(Phase != "training", Phase != "HSD + treatment") %>%
-    arrange(group) %>%
-    mutate(sys_mean_diff = c(0, diff(specimen_mean_systolic)),
-           hr_mean_diff = c(0, diff(specimen_hr_mean))) %>%
+  all_sumarized_diff <- all_sumarized %>%
+    group_by(`Specimen Name`) %>% #
+    arrange(`Specimen Name`, Phase) %>%
+    summarize(sys_mean_diff = sys_mean - sys_mean[1L], # subtract from each mouse's baseline
+              hr_mean_diff = hr_mean - hr_mean[1L], .groups = "keep") %>%
+    left_join(three_day_df %>% ungroup() %>% distinct(`Specimen Name`,group), by = "Specimen Name") %>% 
+    mutate(Phase = rep(unique(three_day_df %>% filter(Phase != "training") %>% .$Phase))) %>%
     left_join(cutoff_dates_df, by = "Phase") %>%
     mutate(unique_id = make.unique(as.character(`Specimen Name`))) %>% 
     ungroup() %>%
-    mutate(Phase = factor(Phase, levels = fct_phases))
-  
-  thsdt_sumarized_diff <- three_day_df %>% 
-    filter(Phase != "training", Phase != "baseline") %>%
-    arrange(group) %>%
-    mutate(sys_mean_diff = c(0, diff(specimen_mean_systolic)),
-           hr_mean_diff = c(0, diff(specimen_hr_mean))) %>%
-    left_join(cutoff_dates_df, by = "Phase") %>%
-    mutate(unique_id = make.unique(as.character(`Specimen Name`))) %>% 
-    ungroup() %>%
-    mutate(Phase = factor(Phase, levels = fct_phases))
-  
-  bhsdt_sumarized_diff <- three_day_df %>% 
-    filter(Phase != "training", Phase != "treatment") %>%
-    arrange(group) %>%
-    mutate(sys_mean_diff = c(0, diff(specimen_mean_systolic)),
-           hr_mean_diff = c(0, diff(specimen_hr_mean))) %>%
-    left_join(cutoff_dates_df, by = "Phase") %>%
-    mutate(unique_id = make.unique(as.character(`Specimen Name`))) %>% 
-    ungroup() %>%
-    mutate(Phase = factor(Phase, levels = fct_phases))
+    mutate(Phase = factor(Phase, levels = fct_phases)) %>%
+    filter(sys_mean_diff != 0)
   
   
-  my_comparisons <- list( c("baseline", "treatment"), c("baseline", "HSD + treatment"), c("treatment", "HSD + treatment") )
-  
-  # res.aov <- anova_test(data = all_sumarized_diff, 
-  #                       dv = sys_mean_diff, 
-  #                       wid = `unique_id`, within = Phase) %>% 
-  #   get_anova_table() %>% 
-  #   adjust_pvalue(method = "bonferroni"); res.aov
-  # 
-# 
-#   p_vals <- all_sumarized_diff %>% pairwise_t_test(
-#     sys_mean_diff ~ Phase, paired = FALSE,
-#     p.adjust.method = "bonferroni"
-#   ) %>% add_y_position() %>%
-#    mutate(y.position = seq(min(y.position), max(y.position),length.out = n()))
-  
-  raw_sys1_g <- ggline(bt_sumarized_diff, x = "Phase", y = "specimen_mean_systolic", 
-                       add = c("mean_se", "jitter"),
-                       color = "group", palette = named_color_vec, ggtheme = theme_bw(),
-                       facet.by = "group") + 
-    # stat_pvalue_manual(p_vals, label = "p.signif")  +
+  raw_sys1_g <- ggbarplot(all_sumarized, x = "group", y = "sys_mean", 
+                          add = c("mean_se", "jitter"), facet.by = "Phase", color = "group", 
+                          palette = named_color_vec,
+                          ggtheme = theme_bw()) +
+    scale_y_continuous(breaks = seq(90, 150, 10)) +
+    ggtitle("Raw Systolic BP") +
     ylab("Mean systolic BP (mmHg)") + 
-    xlab("Phase") +
-    ggtitle("Raw systolic BP - baseline to treatment") + 
-    stat_compare_means(method = 't.test',
-                       comparisons = my_comparisons[1], 
-                       label = "p.format", paired = TRUE
-    )
+    xlab("Tx group") +
+    stat_compare_means(method = "t.test", 
+                       paired = FALSE,
+                       label = "p.format", label.y = max(all_sumarized$sys_mean) + 10
+    ); raw_sys1_g
   
-  delta_sys1_g <- ggline(bt_sumarized_diff, x = "Phase", y = "sys_mean_diff", 
-                         add = c("mean_se", "jitter"),
-                         color = "group", palette = named_color_vec, ggtheme = theme_bw(),
-                         facet.by = "group") +
-    ylab("Mean systolic BP change\nfrom previous phase (mmHg)") + 
-    xlab("Phase") +
-    ggtitle("Change in systolic BP - baseline to treatment") + 
-    stat_compare_means(method = 't.test',
-                       comparisons = my_comparisons[1], 
-                       label = "p.format", paired = TRUE
-    )
-  
-  raw_sys2_g <- ggline(bhsdt_sumarized_diff, x = "Phase", y = "specimen_mean_systolic", 
-                       add = c("mean_se", "jitter"),
-                       color = "group", palette = named_color_vec, ggtheme = theme_bw(),
-                       facet.by = "group") + 
-    # stat_pvalue_manual(p_vals, label = "p.signif")  +
-    ylab("Mean systolic BP (mmHg)") + 
-    xlab("Phase") +
-    ggtitle("Raw systolic BP - baseline to HSD + treatment") + 
-    stat_compare_means(method = 't.test',
-                       comparisons = my_comparisons[2], 
-                       label = "p.format", paired = TRUE
-    )
-  
-  delta_sys2_g <- ggline(bhsdt_sumarized_diff, x = "Phase", y = "sys_mean_diff", 
-                         add = c("mean_se", "jitter"),
-                         color = "group", palette = named_color_vec, ggtheme = theme_bw(),
-                         facet.by = "group") +
-    ylab("Mean systolic BP change\nfrom previous phase (mmHg)") + 
-    xlab("Phase") +
-    ggtitle("Change in systolic BP - baseline to HSD + treatment") + 
-    stat_compare_means(method = 't.test',
-                       comparisons = my_comparisons[2], 
-                       label = "p.format", paired = TRUE
-    )
-  
-  raw_sys3_g <- ggline(thsdt_sumarized_diff, x = "Phase", y = "specimen_mean_systolic", 
-                       add = c("mean_se", "jitter"),
-                       color = "group", palette = named_color_vec, ggtheme = theme_bw(),
-                       facet.by = "group") + 
-    # stat_pvalue_manual(p_vals, label = "p.signif")  +
-    ylab("Mean systolic BP (mmHg)") + 
-    xlab("Phase") +
-    ggtitle("Raw systolic BP - treatment to HSD + treatment") + 
-    stat_compare_means(method = 't.test',
-                       comparisons = my_comparisons[3], 
-                       label = "p.format", paired = TRUE
-    )
-  
-  delta_sys3_g <- ggline(thsdt_sumarized_diff, x = "Phase", y = "sys_mean_diff", 
-                         add = c("mean_se", "jitter"),
-                         color = "group", palette = named_color_vec, ggtheme = theme_bw(),
-                         facet.by = "group") +
-    ylab("Mean systolic BP change\nfrom previous phase (mmHg)") + 
-    xlab("Phase") +
-    ggtitle("Change in systolic BP - treatment to HSD + treatment") + 
-    stat_compare_means(method = 't.test',
-                       comparisons = my_comparisons[3], 
-                       label = "p.format", paired = TRUE
-    )
+  raw_sys1_g <- ggpar(raw_sys1_g, ylim = c(90, 150)); raw_sys1_g
   
   
-  raw_sys4_g <- ggline(all_sumarized_diff, x = "Phase", y = "specimen_mean_systolic", 
-         add = c("mean_se", "jitter"),
-         color = "group", palette = named_color_vec, ggtheme = theme_bw(),
-         facet.by = "group") + 
-    # stat_pvalue_manual(p_vals, label = "p.signif")  +
-    ylab("Mean systolic BP (mmHg)") + 
-    xlab("Phase") +
-    ggtitle("Raw systolic BP by phase") + 
-    stat_compare_means(method = 't.test',
-                       comparisons = my_comparisons, 
-                       label = "p.format", paired = TRUE
-    )
+  delta_sys1_g <- ggbarplot(all_sumarized_diff, x = "group", y = "sys_mean_diff", 
+                            add = c("mean_se", "jitter"), facet.by = "Phase", color = "group", 
+                            palette = named_color_vec,
+                            ggtheme = theme_bw()) +
+    ggtitle("Difference from baseline") +
+    ylab("Mean systolic BP\ndifference from baseline (mmHg)") + 
+    xlab("Tx group")  +  
+    stat_compare_means(method = "t.test", 
+                       paired = FALSE,
+                       label = "p.format", 
+    ); delta_sys1_g
   
-  delta_sys4_g <- ggline(all_sumarized_diff, x = "Phase", y = "sys_mean_diff", 
-         add = c("mean_se", "jitter"),
-         color = "group", palette = named_color_vec, ggtheme = theme_bw(),
-         facet.by = "group") +
-    ylab("Mean systolic BP change\nfrom previous phase (mmHg)") + 
-    xlab("Phase") +
-    ggtitle("Change in systolic BP by phase") + 
-    stat_compare_means(method = 't.test',
-      comparisons = my_comparisons, 
-      label = "p.format", paired = TRUE, 
-    ) 
+  # difference between groups??
+  all_sumarized %>%
+    group_by(`group`) %>%
+    arrange(`Specimen Name`, Phase) %>%
+    summarize(sys_mean_diff = sys_mean - sys_mean[1L], # subtract from each mouse's baseline
+              hr_mean_diff = hr_mean - hr_mean[1L], .groups = "keep") %>%
 
-
-  sys_bp_g_lst <- ggarrange(raw_sys1_g, delta_sys1_g, 
-                            raw_sys2_g, delta_sys2_g, 
-                            raw_sys3_g, delta_sys3_g, 
-                            raw_sys4_g, delta_sys4_g, 
-                            nrow = 4, ncol = 2, common.legend = TRUE) 
+  
+  # change for each mouse, by grou
+  # my_comparisons <- list( c("baseline", "treatment"), c("baseline", "HSD + treatment"), c("treatment", "HSD + treatment") )
+  # my_comparisons_groups <- list(c("vehicle", drug_name))
+  
+  
+  sys_bp_g_lst <- ggarrange(raw_sys1_g, delta_sys1_g, ncol = 2,
+                            nrow = 1, common.legend = TRUE) 
   
   sys_bp_g_lst_fn <- file.path(results_dir, "bp_change.pdf")
-  ggsave(sys_bp_g_lst, file = sys_bp_g_lst_fn, width = 12, height = 18)
-  
-  # # diff by mouse
-  # all_sumarized_diff
-  # 
-  sys_by_day_g <- ggline(all_sumarized_diff, x = "Date", y = "sys_mean_diff", # group = "group",
-                         add = c("mean_se", "jitter"), facet.by = "Phase", scales = "free_x",
-                         color = "group", palette = named_color_vec, ggtheme = theme_bw()) +
-    # geom_smooth(all_sumarized_diff,
-    #             mapping = aes(x = Date, y = sys_mean_diff, group = group, color = group),
-    #             se = TRUE, stat = "smooth", method = "lm",
-    #             inherit.aes = FALSE,
-    #             size = 1.3, linetype = "dashed", alpha = 0.3) +
-    ylab("Mean systolic BP change\nfrom previous phase (mmHg)") +
-    xlab("Date") +
-    ggtitle("Change in systolic BP by phase over time")
+  ggsave(sys_bp_g_lst, file = sys_bp_g_lst_fn, width = 10, height = 6)
   
 
+
   
-  sys_bp_by_day_g_lst_fn <- file.path(results_dir, "bp_by_day_change.pdf")
-  ggsave(sys_by_day_g, file = sys_bp_by_day_g_lst_fn, width = 10, height = 6)
   
   # cutoff dates calculated early on
   names_chr <- cutoff_dates_df %>% filter(Phase != "training") %>% pluck("Phase")

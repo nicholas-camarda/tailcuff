@@ -112,6 +112,30 @@ run_main <- function(my_project_dir){
     meta_df_all <- NULL
     meta_df <- NULL
   }
+  
+  
+  diet_df_temp <- read_excel(full_path_fn, sheet = 3)
+  if (nrow(diet_df_temp) != 0){
+    diet_df <- diet_df_temp %>% 
+      group_by(`Cage #`) %>%
+      arrange(`Cage #`, Date) %>%
+      summarize(norm_water_diff = c(0, diff(`Water (g)`))/`# Mice`, 
+                norm_food_diff = c(0, diff(`Food (g)`))/`# Mice`, .groups = "keep") %>% 
+      bind_cols(diet_df_temp %>% arrange(`Cage #`, Date) %>% select(Date)) %>%
+      mutate(Date = as.character(as.Date(Date)))
+    ggline(diet_df, x = "Date", y = "norm_water_diff", 
+           group = "Cage #", color = "Cage #") + 
+      ylab("Normalized water consumption (g / mouse)")+
+      ggtitle("Water consumption")
+    ggline(diet_df, x = "Date", y = "norm_food_diff", 
+           group = "Cage #", color = "Cage #") + 
+      ylab("Normalized food consumption (g / mouse)") +
+      ggtitle("Food consumption")
+    
+  } else {
+    diet_df <- NULL
+  }
+  
 
     
   # https://cran.r-project.org/web/packages/randomizr/vignettes/randomizr_vignette.html
