@@ -497,6 +497,20 @@ run_plots_and_analysis <- function(res_lst, my_project_dir){
     mutate(Phase = factor(Phase, levels = fct_phases)) %>%
     filter(sys_mean_diff != 0)
   
+  all_sumarized_diff_t_hsd <- all_sumarized %>%
+    filter(Phase != "baseline") %>%
+    group_by(`Specimen Name`) %>% #
+    arrange(`Specimen Name`, Phase) %>%
+    summarize(sys_mean_diff = sys_mean - sys_mean[1L], # subtract from each mouse's baseline
+              hr_mean_diff = hr_mean - hr_mean[1L], .groups = "keep") %>%
+    left_join(three_day_df %>% ungroup() %>% distinct(`Specimen Name`,group), by = "Specimen Name") %>% 
+    mutate(Phase = rep(unique(three_day_df %>% filter(!(Phase %in% c("baseline", "training")) )%>% .$Phase))) %>%
+    left_join(cutoff_dates_df, by = "Phase") %>%
+    mutate(unique_id = make.unique(as.character(`Specimen Name`))) %>% 
+    ungroup() %>%
+    mutate(Phase = factor(Phase, levels = fct_phases)) %>%
+    filter(sys_mean_diff != 0)
+  
   
   raw_sys1_g <- ggbarplot(all_sumarized, x = "group", y = "sys_mean", 
                           add = c("mean_se", "jitter"), facet.by = "Phase", color = "group", 
@@ -526,27 +540,29 @@ run_plots_and_analysis <- function(res_lst, my_project_dir){
                        label = "p.format", 
     ); delta_sys1_g
   
-  # difference between groups??
-  all_sumarized %>%
-    group_by(`group`) %>%
-    arrange(`Specimen Name`, Phase) %>%
-    summarize(sys_mean_diff = sys_mean - sys_mean[1L], # subtract from each mouse's baseline
-              hr_mean_diff = hr_mean - hr_mean[1L], .groups = "keep") %>%
-
+  delta_sys2_g <- ggbarplot(all_sumarized_diff_t_hsd, x = "group", y = "sys_mean_diff", 
+                            add = c("mean_se", "jitter"), facet.by = "Phase", color = "group", 
+                            palette = named_color_vec,
+                            ggtheme = theme_bw()) +
+    ggtitle("Difference from treatment") +
+    ylab("Mean systolic BP\ndifference from treatment (mmHg)") + 
+    xlab("Tx group")  +  
+    stat_compare_means(method = "t.test", 
+                       paired = FALSE,
+                       label = "p.format", 
+    ); delta_sys2_g
   
   # change for each mouse, by grou
   # my_comparisons <- list( c("baseline", "treatment"), c("baseline", "HSD + treatment"), c("treatment", "HSD + treatment") )
   # my_comparisons_groups <- list(c("vehicle", drug_name))
   
   
-  sys_bp_g_lst <- ggarrange(raw_sys1_g, delta_sys1_g, ncol = 2,
-                            nrow = 1, common.legend = TRUE) 
+  sys_bp_g_lst <- ggarrange(raw_sys1_g, 
+                            ggarrange(delta_sys1_g, delta_sys2_g, ncol = 2),
+                            nrow = 2, common.legend = TRUE) 
   
   sys_bp_g_lst_fn <- file.path(results_dir, "bp_change.pdf")
-  ggsave(sys_bp_g_lst, file = sys_bp_g_lst_fn, width = 10, height = 6)
-  
-
-
+  ggsave(sys_bp_g_lst, file = sys_bp_g_lst_fn, width = 10, height = 9)
   
   
   # cutoff dates calculated early on
