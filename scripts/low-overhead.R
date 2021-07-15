@@ -7,7 +7,7 @@ run_low_overhead <- function(my_project_dir){
   my_cur_dir <- getwd()
   data_dir <- file.path(my_cur_dir, "data", my_project_dir)
   output_dir <- file.path(my_cur_dir, "output", my_project_dir)
-  cleaned_data_dir <- file.path(output_dir, "../cleaned-data")
+  cleaned_data_dir <- file.path(output_dir, "cleaned-data")
   results_dir <- file.path(output_dir, "results", "low-overhead")
   
   walk(list(data_dir, output_dir, cleaned_data_dir, results_dir), dir.create, showWarnings = FALSE, recursive = TRUE)
@@ -86,7 +86,7 @@ run_low_overhead <- function(my_project_dir){
   
   mark_outliers_df <- data %>%
     group_by(`Specimen Name`, `Date`, Phase) %>%
-    left_join(fences_df, by = c("Specimen Name", "Date")) %>%
+    left_join(fences_df, by = c("Specimen Name", "Date", "Phase")) %>%
     mutate(is.outlier = Systolic > upper_fence | Systolic < lower_fence) %>%
     dplyr::select(is.outlier, everything())
 
@@ -168,12 +168,8 @@ run_low_overhead <- function(my_project_dir){
     arrange(`Specimen Name`, Phase) %>%
     mutate(sys_mean_diff = sys_mean - sys_mean[1L], # subtract from each mouse's baseline
               hr_mean_diff = hr_mean - hr_mean[1L]) %>%
-    left_join(three_day_df %>% ungroup() %>% distinct(`Specimen Name`), by = "Specimen Name") 
-    left_join(cutoff_dates_df, by = "Phase") %>%
     mutate(unique_id = make.unique(as.character(`Specimen Name`))) %>% 
-    ungroup() %>%
-    # mutate(Phase = factor(Phase, levels = fct_phases)) %>%
-    filter(sys_mean_diff != 0)
+    ungroup() 
   
   all_sumarized_diff$`Specimen Name` <- droplevels(all_sumarized_diff$`Specimen Name`)
   
@@ -212,4 +208,5 @@ run_low_overhead <- function(my_project_dir){
   sys_bp_g_lst_fn <- file.path(results_dir, "bp_change.pdf")
   ggsave(sys_bp_g_lst, file = sys_bp_g_lst_fn, width = 14, height = 6)
   
+  message(qq("Done! Check @{results_dir} for results."))
 }
