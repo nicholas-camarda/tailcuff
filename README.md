@@ -31,7 +31,7 @@ mkdir data/<project_name>
 5. First, run all code up until 'RUN-2', including `process_data_fn(project_dir = my_project_dir)`. If all goes well, you will receive a file in `output/sor-pilot3/cleaned-data` called `my_data.csv`. Open this file with Excel, and save it as an `.xslx` file. NOTE the `.xlsx` extension! DO NOT change the name otherwise!
 
 From this point you have two options:
-A. Run the `low_overhead()`
+A. Run the `run_low_overhead(my_project_dir)`
 B. Proceed to step 6.
 
 6. Next, edit the first sheet of this `.xlsx` file with the correct Phase information (training, baseline, or treatment). The date will be automatically extracted from the file name. If the date doesn't look correct, modify it.
