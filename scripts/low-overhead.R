@@ -145,11 +145,26 @@ run_low_overhead <- function(my_project_dir){
               .groups = "keep") %>%
     # necessary?
     ungroup()
+
   
-  three_day_df <- specimen_avg_data_df %>%
+  three_day_df_temp <- specimen_avg_data_df %>%
     group_by(`Specimen Name`, Phase) %>%
     mutate(n = n():1) %>%
     filter(n %in% c(1:3))
+  
+  count_spec <- three_day_df %>% 
+    group_by(`Specimen Name`) %>% 
+    summarize(count = n())
+  
+  max_count <- max(count_spec$count)
+  
+  message("Filtering out Specimens with incomplete data...")
+  three_day_df <- three_day_df_temp %>%
+    left_join(count_spec, by = "Specimen Name") %>%
+    filter(count == max_count)
+  
+  removed_specs <- anti_join( sample_id_df, three_day_df, by = "Specimen Name") %>% .$`Specimen Name` %>% as.character()
+  message(qq("Removed @{str_c(removed_specs, collapse= ', ')}"))
   
   all_sumarized <- three_day_df %>% 
     arrange(`Specimen Name`, Phase, Date) %>%
@@ -182,11 +197,13 @@ run_low_overhead <- function(my_project_dir){
     ylab("Mean systolic BP (mmHg)") + 
     xlab("Phase") +
     stat_compare_means(method = "t.test", 
+                       paired = TRUE,
                        comparisons = list(c(1,2), c(2,3), c(1,3)),
                        label = "p.format", 
-    ); 
+    )+
+    labs(caption = "Paired t-test for comparisons"); 
   
-  raw_sys1_g <- ggpar(raw_sys1_g, ylim = c(min(all_sumarized$sys_mean), max(all_sumarized$sys_mean) + 5)); raw_sys1_g
+  raw_sys1_g <- ggpar(raw_sys1_g, ylim = c(min(all_sumarized$sys_mean), max(all_sumarized$sys_mean) + 15)); raw_sys1_g
   
   
   delta_sys1_g <- ggbarplot(all_sumarized_diff, x = "date_range", y = "sys_mean_diff", 
@@ -197,9 +214,11 @@ run_low_overhead <- function(my_project_dir){
     ylab("Mean systolic BP\ndifference from Phase (mmHg)") + 
     xlab("Phase")  +  
     stat_compare_means(method = "t.test", 
+                       paired = TRUE,
                        comparisons = list(c(1,2), c(2,3), c(1,3)),
                        label = "p.format", 
-    ); delta_sys1_g
+    ) +
+    labs(caption = "Paired t-test for comparisons"); delta_sys1_g
 
 
   sys_bp_g_lst <- ggarrange(raw_sys1_g, delta_sys1_g, ncol = 2,
