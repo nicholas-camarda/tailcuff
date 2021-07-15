@@ -272,7 +272,9 @@ run_plots_and_analysis <- function(res_lst, my_project_dir){
     ggtitle("Outliers marked") + 
     facet_grid(~ Date) +
     theme(axis.text.x = element_text(angle = 60, hjust=1, size = rel(0.75)),
-          axis.text.y = element_text(hjust = 0.5)) 
+          axis.text.y = element_text(hjust = 0.5)) + 
+    facet_wrap(~ Date, ncol = 5) + 
+    labs(caption = "Pink triangles = where outliers used to be!")
   
   
   # just plot the watermark of where the outliers used to be...
@@ -444,33 +446,6 @@ run_plots_and_analysis <- function(res_lst, my_project_dir){
   ggsave(avg_lst_g, file = avg_res_fn, width = 12, height = 15)
   
   ## DIFFERENCE FROM BASELINE
-  
-  # vehicle_avg_3day <- three_day_df %>%
-  #   filter(Phase == "baseline") %>%
-  #   group_by(`Specimen Name`, group, color, Phase) %>%
-  #   summarize(specimen_mean_systolic = mean(specimen_mean_systolic),
-  #             specimen_systolic_sem  = calculate_sem(specimen_mean_systolic), 
-  #             specimen_hr_mean = mean(specimen_hr_mean),
-  #             specimen_hr_sem  = calculate_sem(specimen_hr_mean), 
-  #             .groups = "keep") %>%
-  #   mutate(Date = as.factor(cutoff_dates_df %>% filter(Phase == "baseline") %>% pluck("date_range")))
-  
-  # all_sumarized_diff <- three_day_df %>% 
-  #   filter(Phase != "training") %>%
-  #   group_by(Phase, group) %>%
-  #   summarize(mean_systolic = mean(specimen_mean_systolic),
-  #             systolic_sem  = calculate_sem(specimen_mean_systolic), 
-  #             hr_mean = mean(specimen_hr_mean),
-  #             hr_sem  = calculate_sem(specimen_hr_mean), 
-  #             .groups = "keep") %>% 
-  #   group_by(group) %>% 
-  #   arrange(group) %>%
-  #   mutate(sys_mean_diff = c(0, diff(mean_systolic)),
-  #          hr_mean_diff = c(0, diff(hr_mean))) %>%
-  #   left_join(cutoff_dates_df, by = "Phase")
-  # 
-  
-  
   # dates_fct <- unique(three_day_df$Date)
   
   all_sumarized <- three_day_df %>% 

@@ -115,22 +115,44 @@ run_main <- function(my_project_dir){
   
   
   diet_df_temp <- read_excel(full_path_fn, sheet = 3)
-  if (nrow(diet_df_temp) != 0){
+  if (nrow(diet_df_temp) != 0 & nrow(meta_df_all_temp) != 0){
+    
+    alive_meta_df <- meta_df %>% 
+      filter(Status == "Alive") %>%
+      arrange(`Specimen Name`)
+    cage_order_int <- c(0,cumsum(as.numeric(with(alive_meta_df, `New CageID`[1:(length(`New CageID`)-1)] !=  `New CageID`[2:length(`New CageID`)])))) + 1
+    cage_weight_df <- alive_meta_df %>%
+      bind_cols(tibble(`Cage #` = cage_order_int)) %>%
+      group_by(`Cage #`) %>%
+      summarize(cage_weight = mean(`Average body weight (g)`)) %>%
+      mutate(`Cage #` = str_c("C",`Cage #`, sep=""))
+    
     diet_df <- diet_df_temp %>% 
       group_by(`Cage #`) %>%
       arrange(`Cage #`, Date) %>%
-      summarize(norm_water_diff = c(0, diff(`Water (g)`))/`# Mice`, 
-                norm_food_diff = c(0, diff(`Food (g)`))/`# Mice`, .groups = "keep") %>% 
+      left_join(cage_weight_df, by = "Cage #") %>%
+      summarize(norm_water_diff = c(0, diff(`Water (g)`))/cage_weight, 
+                norm_food_diff = c(0, diff(`Food (g)`))/cage_weight, .groups = "keep") %>% 
       bind_cols(diet_df_temp %>% arrange(`Cage #`, Date) %>% select(Date)) %>%
-      mutate(Date = as.character(as.Date(Date)))
-    ggline(diet_df, x = "Date", y = "norm_water_diff", 
-           group = "Cage #", color = "Cage #") + 
-      ylab("Normalized water consumption (g / mouse)")+
-      ggtitle("Water consumption")
-    ggline(diet_df, x = "Date", y = "norm_food_diff", 
-           group = "Cage #", color = "Cage #") + 
-      ylab("Normalized food consumption (g / mouse)") +
-      ggtitle("Food consumption")
+      mutate(Date = as.character(as.Date(Date))) %>%
+      filter(norm_water_diff != 0)
+    
+    water_g <- ggbarplot(diet_df, x = "Cage #", y = "norm_water_diff", 
+           group = "Cage #", fill = "Cage #", palette = "jco", ggtheme = theme_bw()) + 
+      ylab("Normalized water consumption (g water / g mouse)")+
+      ggtitle("Water consumption", subtitle = diet_df$Date); water_g
+    
+    food_g <- ggbarplot(diet_df, x = "Cage #", y = "norm_food_diff", 
+           group = "Cage #", fill = "Cage #",  palette = "jco", ggtheme = theme_bw()) + 
+      ylab("Normalized food consumption (g food / g mouse)") +
+      geom_hline(yintercept=-3.5, linetype="dashed", 
+                 color = "red", size=2) +
+      ggtitle("Food consumption", subtitle = diet_df$Date) +
+      labs(caption = "Red line indicates Lauren's minimum measurement\nfor average food consumption"); food_g
+    
+    diet_g_lst <- ggarrange(water_g, food_g, nrow = 1, ncol = 2, common.legend = TRUE)
+    diet_g_lst_fn <- file.path(results_dir, "diet.pdf")
+    ggsave(diet_g_lst, filename = diet_g_lst_fn, width = 8, height = 6)
     
   } else {
     diet_df <- NULL
