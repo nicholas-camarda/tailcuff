@@ -64,12 +64,11 @@ process_data_fn(project_dir = my_project_dir)
 #' @RUN-2A
 run_low_overhead(my_project_dir)
 
+
 #' @RUN-2B
 #' [2] See example data and metadata files written into examples/
 #' **BEFORE** running the next functions, adjust the Phases of the experiment in Excel!!
 res_lst <- run_main(my_project_dir)
-run_plots_and_analysis(res_lst, my_project_dir)
-
-
+plots <- run_plots_and_analysis(res_lst, my_project_dir)
 
 

@@ -122,7 +122,7 @@ run_plots_and_analysis <- function(res_lst, my_project_dir){
           axis.text.y = element_text(hjust = 0.55),
           panel.spacing = unit(0.5, "lines")) +
     labs(title = "Weight change (g) since beginning of experiment\n") +
-    facet_grid(cols = vars(`Specimen Name`))
+    facet_wrap(group ~`Specimen Name`, nrow = 2); weight_change_g
   
   
   # daily average weight loss
@@ -177,7 +177,7 @@ run_plots_and_analysis <- function(res_lst, my_project_dir){
           axis.text.y = element_text(hjust = 0.5)) +
     ylab("Number of Accepted Cycles") +
     ggtitle("Accepted cycles per mouse over time") + 
-    facet_grid(cols = vars(`Specimen Name`))
+    facet_wrap(~`Specimen Name`)
   
   accepted_cycles_lst_g <- ggarrange(accepted_cycles_g, ncol = 1, nrow = 1, heights = c(0.4))
   
@@ -566,5 +566,8 @@ run_plots_and_analysis <- function(res_lst, my_project_dir){
   
   summary_res_fn <- file.path(results_dir, "summary.pdf")
   ggsave(summary_boxplots_g, file = summary_res_fn, width = 15, height = 10)
+  
+  glist <- list(weight_change_avg_g, weight_change_g, raw_sys1_g, delta_sys1_g, delta_sys2_g) %>% set_names("avg_weight_change", "weight_change", "raw_sys", "delta_sys1", "delta_sys2")
+  return(glist)
 }
 

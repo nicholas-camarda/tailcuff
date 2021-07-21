@@ -1,7 +1,7 @@
 # check for packages that need to be installed
 # message("Checking for required packages...")
 list_of_packages <- c("tidyverse", "rstatix", "ggthemes", "ggforce", "ggsci", "ggpubr", 
-                      "readxl", "forcats", "knitr", "kableExtra", "gridExtra", "GetoptLong", "zoo", "randomizr", "magick")
+                      "readxl", "forcats", "knitr", "kableExtra", "gridExtra","conflicted", "GetoptLong", "zoo", "randomizr", "magick")
 new_packages <- list_of_packages[!(list_of_packages %in% installed.packages()[,"Package"])]
 if(length(new_packages)) install.packages(new_packages)
 # message("Done!")
@@ -24,7 +24,12 @@ library(gridExtra)
 library(GetoptLong)
 library(zoo)
 library(randomizr)
+library(conflicted)
 
+conflict_prefer("recode", "dplyr")
+conflict_prefer("select", "dplyr")
+conflict_prefer("filter", "dplyr")
+conflict_prefer("slice", "dplyr")
 
 run_main <- function(my_project_dir){
 
@@ -125,27 +130,28 @@ run_main <- function(my_project_dir){
       bind_cols(tibble(`Cage #` = cage_order_int)) %>%
       group_by(`Cage #`) %>%
       summarize(cage_weight = mean(`Average body weight (g)`)) %>%
-      mutate(`Cage #` = str_c("C",`Cage #`, sep=""))
+      mutate(`Cage #` = str_c("C",`Cage #`, sep="")) 
+    # num_mice_per_cage <- tibble(num_mice = as.numeric(table(cage_order_int)))
     
     diet_df <- diet_df_temp %>% 
       group_by(`Cage #`) %>%
       arrange(`Cage #`, Date) %>%
       left_join(cage_weight_df, by = "Cage #") %>%
-      summarize(norm_water_diff = c(0, diff(`Water (g)`))/cage_weight, 
-                norm_food_diff = c(0, diff(`Food (g)`))/cage_weight, .groups = "keep") %>% 
+      summarize(norm_water_diff = -1*c(0, diff(`Water (g)`))/`# Mice`, 
+                norm_food_diff = -1*c(0, diff(`Food (g)`))/`# Mice`, .groups = "keep") %>% 
       bind_cols(diet_df_temp %>% arrange(`Cage #`, Date) %>% select(Date)) %>%
       mutate(Date = as.character(as.Date(Date))) %>%
-      filter(norm_water_diff != 0)
+      filter(norm_water_diff != 0) 
     
     water_g <- ggbarplot(diet_df, x = "Cage #", y = "norm_water_diff", 
            group = "Cage #", fill = "Cage #", palette = "jco", ggtheme = theme_bw()) + 
-      ylab("Normalized water consumption (g water / g mouse)")+
+      ylab("Normalized water consumption (g water / mouse)")+
       ggtitle("Water consumption", subtitle = diet_df$Date); water_g
     
     food_g <- ggbarplot(diet_df, x = "Cage #", y = "norm_food_diff", 
            group = "Cage #", fill = "Cage #",  palette = "jco", ggtheme = theme_bw()) + 
-      ylab("Normalized food consumption (g food / g mouse)") +
-      geom_hline(yintercept=-3.5, linetype="dashed", 
+      ylab("Normalized food consumption (g food / mouse)") +
+      geom_hline(yintercept=3.5, linetype="dashed", 
                  color = "red", size=2) +
       ggtitle("Food consumption", subtitle = diet_df$Date) +
       labs(caption = "Red line indicates Lauren's minimum measurement\nfor average food consumption"); food_g
